@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="bg">
+
+<head>
+	<meta charset="utf-8">
+	<style>
+		label {
+			display: block;
+		}
+
+		input[type=text],
+		input[type=number] {
+			width: 9ch;
+		}
+
+		input:read-only {
+			background: lightgreen;
+		}
+
+		p {
+			margin: auto;
+		}
+
+		table {
+			margin-left: auto;
+			margin-right: auto;
+			border-collapse: collapse;
+		}
+
+		td,
+		th {
+			border: 1px solid gray;
+		}
+
+		* {
+			font-size: 23px;
+		}
+
+		body {
+			/* Firefox doesn't support zoom property */
+			/* zoom: 150%; */
+			display: flex;
+			text-align: center;
+			justify-content: center;
+		}
+	</style>
+	<style id="dark-theme">
+		* {
+			background-color: black;
+			color: white;
+		}
+
+		input:read-only {
+			background: green;
+		}
+	</style>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+	<fieldset>
+		<legend>Калкулатор: Цена за килограм (или литър)</legend>
+		<label>Режим:
+			<select id="modeSelect" onchange="toggleMode(this.value)">
+				<option value="automatic">Автоматичен</option>
+				<option value="manual">Ръчен</option>
+			</select>
+		</label>
+		<!-- известни стойности -->
+		<p id="infoText" style="font-size: small;">
+			Въведете две произволни стойности,<br>
+			третата ще се изчисли автоматично.<br>
+		</p>
+		<br>
+		<!-- <div style="font-size: small;" onchange="changeMode()">
+			<label style="display: inline;">Ръчно
+				<input type="radio" name="mode" value="manual">
+			</label>
+			<label style="display: inline;">Автоматично
+				<input type="radio" name="mode" value="auto" checked>
+			</label>
+		</div> -->
+		<!-- <button>Настройки ⚙</button>
+	<br> -->
+		<div id="mainEverything" oninput="calculatePricePerWeight()">
+			<label>Цена:
+				<input step=".01" type="number" id="price" placeholder="0.00" autofocus> лв.
+			</label>
+			<br>
+			<label>Тегло:
+				<input step="1" type="number" id="weight" placeholder="0">
+				<select oninput="unitChangeInputStep(this.value)" id="weightUnit" tabindex="-1">
+					<option value="1000">гр</option>
+					<option value="1">кг</option>
+				</select>
+			</label>
+			<br>
+			<label>Цена за кг:
+				<input step=".01" type="number" id="pricePerKG" placeholder="0.00"> лв/кг
+			</label>
+			<br>
+			<button id="calcButton" style="display: none;" onclick="calculatePricePerWeight()">Изчисли</button>
+			<br>
+			<button onclick="clearInputs()" tabindex="-1">🗑️ Ново изчисление</button>
+			<p style="font-size: small;">Клавиш [интервал] за ново изчисление.</p>
+			<hr>
+			<label>Име:
+				<input type="text" id="itemName" placeholder="Име">
+			</label>
+			(незадължително, за сравнение)
+		</div>
+		<br>
+		<button onclick="saveItem()">💾 Запази за сравнение</button>
+		<br>
+		<br>
+		<div id="items"></div>
+		<br>
+		<button onclick="editTable(this)">✏️ Редактиране</button>
+		<br>
+		<button onclick="deleteItems()">Изтрий записи</button>
+		<br>
+		<button onclick="elementToggle(formulas)">Формули</button>
+		<div id="formulas" style="display: none;">
+			<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+			<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+			<svg width="200" height="164" viewBox="0 0 84 97.416" version="1.1" id="svg5"
+				xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg"
+				xmlns:svg="http://www.w3.org/2000/svg">
+				<defs id="defs2">
+					<rect x="273.98587" y="317.67551" width="91.822296" height="59.980694" id="rect16208" />
+					<linearGradient id="linearGradient10006">
+						<stop style="stop-color:#000000;stop-opacity:1;" offset="0" id="stop10004" />
+					</linearGradient>
+					<rect x="347.29562" y="202.15715" width="115.51837" height="51.094666" id="rect8673" />
+					<linearGradient id="linearGradient6415">
+						<stop style="stop-color:#1a981b;stop-opacity:1;" offset="0" id="stop6413" />
+					</linearGradient>
+					<linearGradient xlink:href="#linearGradient10006" id="linearGradient1003" gradientUnits="userSpaceOnUse"
+						x1="347.66992" y1="229.1848" x2="446.91977" y2="229.1848" />
+				</defs>
+				<g id="layer1" style="display:inline">
+					<path
+						style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.74310803;stroke-dasharray:none;stroke-opacity:1"
+						id="path6452" d="m 199.62191,121.67372 -99.20502,0.4557 49.20786,-86.141915 z"
+						transform="translate(-106.96926,-33.390235)" />
+					<path
+						style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.74310803;stroke-dasharray:none;stroke-opacity:1;stroke-linecap:butt;stroke-linejoin:bevel"
+						d="M 13.524357,54.188053 72.32551,53.610126" id="path8434" />
+					<path
+						style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.74759811;stroke-dasharray:none;stroke-opacity:1;stroke-linejoin:round"
+						d="m 43.35565,54.189864 0.19592,34.310281" id="path8564" />
+					<text xml:space="preserve" transform="matrix(0.26458333,0,0,0.26458333,-58.771813,-18.891816)" id="text8671"
+						style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:32px;font-family:Arial;-inkscape-font-specification:Arial;white-space:pre;shape-inside:url(#rect8673);shape-padding:0.740503;display:inline;fill:url(#linearGradient1003);fill-opacity:1;stroke:none;stroke-width:6.80315;stroke-dasharray:none;stroke-opacity:1">
+						<tspan x="348.03516" y="231.72258" id="tspan1188">Цена</tspan>
+					</text>
+					<text xml:space="preserve" transform="matrix(0.26458333,0,0,0.26458333,-59.555511,-18.108117)" id="text16206"
+						style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:32px;font-family:Arial;-inkscape-font-specification:Arial;white-space:pre;shape-inside:url(#rect16208);display:inline;opacity:1;fill:#000000;fill-opacity:1;stroke:none;stroke-width:6.80315;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1;paint-order:normal">
+						<tspan x="273.98633" y="346.49992" id="tspan1190">Тегло</tspan>
+					</text>
+					<text xml:space="preserve"
+						style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.46667px;font-family:Arial;-inkscape-font-specification:Arial;opacity:1;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.8;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+						x="53.492981" y="73.976425" id="text16214">
+						<tspan id="tspan16212"
+							style="stroke-width:1.8;-inkscape-font-specification:Arial;font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal"
+							x="53.492981" y="73.976425">лв/кг</tspan>
+					</text>
+				</g>
+			</svg>
+			<br>
+			Цена = Тегло * Цена за килограм (лв/кг)<br>
+			Тегло = Цена / Цена за килограм (лв/кг)<br>
+			Цена за килограм (лв/кг) = Цена / Тегло<br>
+		</div>
+		<br>
+		<button onclick="toggleLightDarkTheme()" title="Toggle Light/Dark Theme">Ден/Нощ</button>
+	</fieldset>
+	<script>
+		var price = document.getElementById('price')
+		var weight = document.getElementById('weight')
+		var weightUnit = document.getElementById('weightUnit')
+		var pricePerKG = document.getElementById('pricePerKG')
+		function toggleMode(mode) {
+			//if (document.querySelector('input[name=mode]:checked').value === 'manual') {
+			if (mode == 'manual') {
+				// manual mode setting
+				mainEverything.oninput = null
+				calcButton.style.display = 'inline-block'
+				infoText.style.display = 'none'
+			} else if (mode == 'automatic') {
+				// enabling automatic mode
+				mainEverything.oninput = calculatePricePerWeight
+				calcButton.style.display = 'none'
+				infoText.style.display = 'block'
+				calculatePricePerWeight()
+			}
+		}
+		function unitChangeInputStep(unit) {
+			if (unit === '1') {
+				weight.step = 0.001
+				if (weight.value !== '') {
+					weight.value /= 1000
+				}
+			} else if (unit === '1000') {
+				weight.step = 1
+				if (weight.value !== '') {
+					weight.value *= 1000
+				}
+			}
+			// if (weight.value !== '') {
+			//   weight.value /= weightUnit.querySelector(':not(:checked)').value
+			// }
+		}
+		function calculatePricePerWeight() {
+			// може да има 1 стотинка или 1 грам разлика от тази в магазина в зависимост от това как закръглят
+			if (price.value !== '' && weight.value !== '' && !price.readOnly && !weight.readOnly) {
+				pricePerKG.value = (Math.ceil(+(price.value / (weight.value / weightUnit.value)) * 100) / 100).toFixed(2)
+				pricePerKG.readOnly = true
+			} else if (weight.value !== '' && pricePerKG.value !== '' && !weight.readOnly && !pricePerKG.readOnly) {
+				price.value = ((weight.value / weightUnit.value) * pricePerKG.value).toFixed(2)
+				price.readOnly = true
+			} else if (price.value !== '' && pricePerKG.value !== '' && !price.readOnly && !pricePerKG.readOnly) {
+				if (weightUnit.value === '1000') {
+					weight.value = Math.ceil((price.value / pricePerKG.value) * 1000)
+				} else {
+					weight.value = Math.ceil((price.value / pricePerKG.value) * 1000) / 1000
+				}
+				weight.readOnly = true
+			}
+		}
+		// if key doesn't exist
+		if (localStorage.getItem('priceItems') === null) {
+			localStorage.setItem('priceItems', JSON.stringify([]))
+		}
+
+		document.querySelectorAll('input[type=number]').forEach(input => {
+			input.onbeforeinput = function (event) {
+				if (event.data == " ") {
+					clearInputs()
+					event.preventDefault()
+				}
+			}
+		})
+
+		function clearInputs() {
+			document.querySelectorAll('input[type=number],input[type=text]').forEach(input => {
+				input.value = ''
+				input.readOnly = false
+			})
+		}
+
+		function saveItem() {
+			if (pricePerKG.value === '') {
+				return
+			}
+			let items = JSON.parse(localStorage.getItem('priceItems'))
+			items.push([itemName.value, pricePerKG.value + " лв/кг"])
+			localStorage.setItem('priceItems', JSON.stringify(items))
+			loadItems()
+		}
+		function deleteItems() {
+			let items = JSON.parse(localStorage.getItem('priceItems'))
+			let newItems = []
+			document.querySelectorAll('input[type=checkbox][name=item]:not(:checked)').forEach(element => {
+				newItems.push(items[element.value])
+			});
+			localStorage.setItem('priceItems', JSON.stringify(newItems))
+			loadItems()
+		}
+		function toggleCheckboxes(source) {
+			var checkboxes = document.getElementsByName('item');
+			for (var checkbox of checkboxes)
+				checkbox.checked = source.checked;
+		}
+		function checkCheckboxes() {
+			let allChecked = true
+			document.getElementsByName('item').forEach(element => {
+				if (!element.checked) {
+					allChecked = false
+				}
+			})
+			mainCheckbox.checked = allChecked
+		}
+		function loadItems() {
+			var text = '<table id="tableWithItems"><tr><th><input id="mainCheckbox" type="checkbox" onclick="toggleCheckboxes(this)"></th><th>Име</th><th>лв/кг</th></tr>'
+			let items = JSON.parse(localStorage.getItem('priceItems'))
+			for (var i = 0; i < items.length; i++) {
+				text += `<tr><td><input type="checkbox" onclick="checkCheckboxes()" name="item" value=${i}></td>`
+				for (let j = 0; j < items[i].length; j++) {
+					text += '<td>' + items[i][j] + '</td>'
+				}
+				text += '</tr>'
+			}
+			document.getElementById('items').innerHTML = text + '</table>'
+		}
+		loadItems()
+		function deleteAllItems() {
+			localStorage.setItem('priceItems', JSON.stringify([]))
+		}
+		function HTMLTableTo2DJSArray(table, ignoreRowsCount = 0, ignoreColsCount = 0) {
+			let rows = table.querySelector('tbody').querySelectorAll('tr')
+			let arr = []
+			for (let i = 0 + ignoreRowsCount; i < rows.length; i++) {
+				arr.push([])
+				let cols = rows[i].querySelectorAll('td')
+				for (let j = 0 + ignoreColsCount; j < cols.length; j++) {
+					arr[i - ignoreRowsCount].push(cols[j].textContent)
+				}
+			}
+			// Verification
+			// console.log('Is parsed array equal existing array? ' + (JSON.stringify(arr) === localStorage.getItem('priceItems')))
+			return arr
+		}
+		function editTable(button) {
+			if (tableWithItems.isContentEditable) {
+				tableWithItems.contentEditable = false
+				button.textContent = '✏️ Редактиране'
+				localStorage.setItem('priceItems', JSON.stringify(HTMLTableTo2DJSArray(tableWithItems, 1, 1)))
+				loadItems()
+			} else {
+				tableWithItems.contentEditable = true
+				button.textContent = '✏️💾 Запази промените'
+			}
+		}
+
+		function elementToggle(el) {
+			if (el.style.display === "none") {
+				el.style.display = "block";
+			} else {
+				el.style.display = "none";
+			}
+		}
+
+		function applyTheme() {
+			if (localStorage.getItem('theme') === 'dark') {
+				document.getElementById('dark-theme').disabled = false
+			} else {
+				document.getElementById('dark-theme').disabled = true
+			}
+		}
+		applyTheme()
+		function toggleLightDarkTheme() {
+			if (localStorage.getItem('theme') === 'dark') {
+				localStorage.setItem('theme', 'light')
+			} else {
+				localStorage.setItem('theme', 'dark')
+			}
+			applyTheme()
+		}
+	</script>
+</body>
+
+</html>
