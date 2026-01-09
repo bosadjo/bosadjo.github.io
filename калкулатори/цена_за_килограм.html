@@ -61,7 +61,7 @@
 <body>
 	<fieldset>
 		<legend>Калкулатор: Цена за килограм (или литър)</legend>
-		<button id="themeБutton" onclick="toggleLightDarkTheme()" title="Toggle Light/Dark Theme">Тъмна тема</button>
+		<button id="themeButton" onclick="toggleLightDarkTheme()" title="Toggle Light/Dark Theme"></button>
 		<label>Режим:
 			<select id="modeSelect" onchange="toggleMode(this.value)">
 				<option value="automatic">Автоматичен</option>
@@ -386,13 +386,19 @@
 				el.style.display = "none";
 			}
 		}
-
+		
+		var themeText = document.getElementById("themeButton")
 		function applyTheme() {
 			if (localStorage.getItem('theme') === 'dark') {
 				document.getElementById('dark-theme').disabled = false
+				themeText.textContent = "Светла тема"
 			} else {
 				document.getElementById('dark-theme').disabled = true
+				themeText.textContent = "Тъмна тема"
 			}
+		}
+		if (localStorage.getItem('theme') === null) {
+			localStorage.setItem('theme', 'dark')
 		}
 		applyTheme()
 		// initialize currency (default EUR)
@@ -401,13 +407,10 @@
 		updateUnitLabels(initialCurrency)
 		localStorage.setItem('currency', initialCurrency)
 		function toggleLightDarkTheme() {
-			var themeText = document.getElementById("themeБutton")
 			if (localStorage.getItem('theme') === 'dark') {
 				localStorage.setItem('theme', 'light')
-				themeText.textContent = "Тъмна тема"
 			} else {
 				localStorage.setItem('theme', 'dark')
-				themeText.textContent = "Светла тема"
 			}
 			applyTheme()
 		}
