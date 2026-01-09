@@ -61,6 +61,7 @@
 <body>
 	<fieldset>
 		<legend>Калкулатор: Цена за килограм (или литър)</legend>
+		<button id="themeБutton" onclick="toggleLightDarkTheme()" title="Toggle Light/Dark Theme">Светла тема</button>
 		<label>Режим:
 			<select id="modeSelect" onchange="toggleMode(this.value)">
 				<option value="automatic">Автоматичен</option>
@@ -174,7 +175,7 @@
 			Цена за килограм (лв/кг) = Цена / Тегло<br>
 		</div>
 		<br>
-		<button onclick="toggleLightDarkTheme()" title="Toggle Light/Dark Theme">Ден/Нощ</button>
+		<p><a href="mailto:bosadjo@proton.me">Контакт: bosadjo@proton.me</a></p>	
 	</fieldset>
 	<script>
 		var price = document.getElementById('price')
@@ -341,15 +342,17 @@
 		}
 		applyTheme()
 		function toggleLightDarkTheme() {
+			var themeText = document.getElementById("themeБutton")
 			if (localStorage.getItem('theme') === 'dark') {
 				localStorage.setItem('theme', 'light')
+				themeText.textContent = "Тъмна тема"
 			} else {
 				localStorage.setItem('theme', 'dark')
+				themeText.textContent = "Светла тема"
 			}
 			applyTheme()
 		}
 	</script>
 </body>
-
 
 </html>
