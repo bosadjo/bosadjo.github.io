@@ -86,7 +86,11 @@
 	<br> -->
 		<div id="mainEverything" oninput="calculatePricePerWeight()">
 			<label>Цена:
-				<input step=".01" type="number" id="price" placeholder="0.00" autofocus> лв.
+				<input step=".01" type="number" id="price" placeholder="0.00" autofocus>
+				<select id="currencySelect" onchange="changeCurrency(this.value)">
+					<option value="EUR">€</option>
+					<option value="BGN">лв</option>
+				</select>
 			</label>
 			<br>
 			<label>Тегло:
@@ -98,7 +102,7 @@
 			</label>
 			<br>
 			<label>Цена за кг:
-				<input step=".01" type="number" id="pricePerKG" placeholder="0.00"> лв/кг
+				<input step=".01" type="number" id="pricePerKG" placeholder="0.00"> <span id="unitLabel">€/кг</span>
 			</label>
 			<br>
 			<button id="calcButton" style="display: none;" onclick="calculatePricePerWeight()">Изчисли</button>
@@ -170,9 +174,9 @@
 				</g>
 			</svg>
 			<br>
-			Цена = Тегло * Цена за килограм (лв/кг)<br>
-			Тегло = Цена / Цена за килограм (лв/кг)<br>
-			Цена за килограм (лв/кг) = Цена / Тегло<br>
+			Цена = Тегло * Цена за килограм (<span id="formulasUnit">€/кг</span>)<br>
+			Тегло = Цена / Цена за килограм (<span id="formulasUnit2">€/кг</span>)<br>
+			Цена за килограм (<span id="formulasUnit3">€/кг</span>) = Цена / Тегло<br>
 		</div>
 		<br>
 		<p><a href="mailto:bosadjo@proton.me">Контакт: bosadjo@proton.me</a></p>	
@@ -182,6 +186,41 @@
 		var weight = document.getElementById('weight')
 		var weightUnit = document.getElementById('weightUnit')
 		var pricePerKG = document.getElementById('pricePerKG')
+		var currencySelect = document.getElementById('currencySelect')
+		var unitLabel = document.getElementById('unitLabel')
+		var formulasUnit = document.getElementById('formulasUnit')
+		var formulasUnit2 = document.getElementById('formulasUnit2')
+		var formulasUnit3 = document.getElementById('formulasUnit3')
+		const EUR_TO_BGN = 1.95583
+		// current currency will be either 'EUR' or 'BGN'
+		function changeCurrency(newCurrency) {
+			let oldCurrency = localStorage.getItem('currency') || 'EUR'
+			if (newCurrency === oldCurrency) {
+				localStorage.setItem('currency', newCurrency)
+				updateUnitLabels(newCurrency)
+				loadItems()
+				return
+			}
+			// convert inputs if they have values
+			if (price.value !== '') {
+				if (newCurrency === 'BGN' && oldCurrency === 'EUR') price.value = (price.value * EUR_TO_BGN).toFixed(2)
+				if (newCurrency === 'EUR' && oldCurrency === 'BGN') price.value = (price.value / EUR_TO_BGN).toFixed(2)
+			}
+			if (pricePerKG.value !== '') {
+				if (newCurrency === 'BGN' && oldCurrency === 'EUR') pricePerKG.value = (pricePerKG.value * EUR_TO_BGN).toFixed(2)
+				if (newCurrency === 'EUR' && oldCurrency === 'BGN') pricePerKG.value = (pricePerKG.value / EUR_TO_BGN).toFixed(2)
+			}
+			localStorage.setItem('currency', newCurrency)
+			updateUnitLabels(newCurrency)
+			loadItems()
+		}
+		function updateUnitLabels(curr) {
+			let unit = curr === 'EUR' ? '€/кг' : 'лв/кг'
+			unitLabel.textContent = unit
+			formulasUnit.textContent = unit
+			formulasUnit2.textContent = unit
+			formulasUnit3.textContent = unit
+		}
 		function toggleMode(mode) {
 			//if (document.querySelector('input[name=mode]:checked').value === 'manual') {
 			if (mode == 'manual') {
@@ -256,7 +295,8 @@
 				return
 			}
 			let items = JSON.parse(localStorage.getItem('priceItems'))
-			items.push([itemName.value, pricePerKG.value + " лв/кг"])
+			let suffix = (localStorage.getItem('currency') || 'EUR') === 'EUR' ? ' €/кг' : ' лв/кг'
+			items.push([itemName.value, pricePerKG.value + suffix])
 			localStorage.setItem('priceItems', JSON.stringify(items))
 			loadItems()
 		}
@@ -284,12 +324,26 @@
 			mainCheckbox.checked = allChecked
 		}
 		function loadItems() {
-			var text = '<table id="tableWithItems"><tr><th><input id="mainCheckbox" type="checkbox" onclick="toggleCheckboxes(this)"></th><th>Име</th><th>лв/кг</th></tr>'
+			let curr = localStorage.getItem('currency') || 'EUR'
+			let unitSuffix = curr === 'EUR' ? '€/кг' : 'лв/кг'
+			var text = `<table id="tableWithItems"><tr><th><input id="mainCheckbox" type="checkbox" onclick="toggleCheckboxes(this)"></th><th>Име</th><th>${unitSuffix}</th></tr>`
 			let items = JSON.parse(localStorage.getItem('priceItems'))
 			for (var i = 0; i < items.length; i++) {
 				text += `<tr><td><input type="checkbox" onclick="checkCheckboxes()" name="item" value=${i}></td>`
 				for (let j = 0; j < items[i].length; j++) {
-					text += '<td>' + items[i][j] + '</td>'
+					let cell = items[i][j]
+					if (j === 1) {
+						// parse existing stored value and convert to current currency if needed
+						let stored = String(cell)
+						let storedCurrency = stored.includes('лв') ? 'BGN' : (stored.includes('€') ? 'EUR' : 'BGN')
+						let num = parseFloat(stored.replace(',', '.').match(/[-\d\.]+/))
+						if (!isNaN(num)) {
+							if (storedCurrency === 'BGN' && curr === 'EUR') num = num / EUR_TO_BGN
+							if (storedCurrency === 'EUR' && curr === 'BGN') num = num * EUR_TO_BGN
+							cell = num.toFixed(2) + ' ' + unitSuffix
+						}
+					}
+					text += '<td>' + cell + '</td>'
 				}
 				text += '</tr>'
 			}
@@ -341,6 +395,11 @@
 			}
 		}
 		applyTheme()
+		// initialize currency (default EUR)
+		var initialCurrency = localStorage.getItem('currency') || 'EUR'
+		currencySelect.value = initialCurrency
+		updateUnitLabels(initialCurrency)
+		localStorage.setItem('currency', initialCurrency)
 		function toggleLightDarkTheme() {
 			var themeText = document.getElementById("themeБutton")
 			if (localStorage.getItem('theme') === 'dark') {
