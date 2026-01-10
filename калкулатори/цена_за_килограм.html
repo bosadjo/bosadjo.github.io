@@ -127,7 +127,7 @@
 		<br>
 		<button onclick="elementToggle(formulas)">Формули</button>
 		<div id="formulas" style="display: none;">
-			<img src="pricePerWeight.svg" alt="formulas triangle" />
+			<img id="formulaTriangle" src="pricePerWeight.svg" alt="formulas triangle" />
 			<br>
 			Цена = Тегло * Цена за килограм (<span id="formulasUnit">€/кг</span>)<br>
 			Тегло = Цена / Цена за килограм (<span id="formulasUnit2">€/кг</span>)<br>
@@ -343,13 +343,16 @@
 		}
 		
 		var themeText = document.getElementById("themeButton")
+		var formulaTriangle = document.getElementById("formulaTriangle")
 		function applyTheme() {
 			if (localStorage.getItem('theme') === 'dark') {
 				document.getElementById('dark-theme').disabled = false
 				themeText.textContent = "Светла тема"
+				formulaTriangle.src = "pricePerWeightDarkTheme.svg"
 			} else {
 				document.getElementById('dark-theme').disabled = true
 				themeText.textContent = "Тъмна тема"
+				formulaTriangle.src = "pricePerWeight.svg"
 			}
 		}
 		if (localStorage.getItem('theme') === null) {
