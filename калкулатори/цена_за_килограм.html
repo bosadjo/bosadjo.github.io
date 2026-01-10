@@ -87,7 +87,7 @@
 		<div id="mainEverything" oninput="calculatePricePerWeight()">
 			<label>Цена:
 				<input step=".01" type="number" id="price" placeholder="0.00" autofocus>
-				<select id="currencySelect" onchange="changeCurrency(this.value)">
+				<select id="currencySelect" onchange="changeCurrency(this.value)" tabindex="-1">
 					<option value="EUR">€</option>
 					<option value="BGN">лв</option>
 				</select>
