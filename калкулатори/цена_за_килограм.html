@@ -106,27 +106,33 @@
 			</label>
 			<div id="calcButton" style="display: none;">
 				<br>
-				<button onclick="calculatePricePerWeight()">Изчисли</button>
+				<button onclick="calculatePricePerWeight()">🧮 Изчисли</button>
+				<br>
+				<br>
 			</div>
 			<br>
-			<button onclick="clearInputs()" tabindex="-1">🗑️ Ново изчисление</button>
-			<p style="font-size: small;">Клавиш [интервал] за ново изчисление.</p>
-			<hr>
-			<label>Име:
+			<label>Име на продукт:
 				<input type="text" id="itemName" placeholder="Име">
 			</label>
-			(незадължително, за сравнение)
+			<p style="font-size: medium;">(незадължително, за сравнение)</p>
+			<br>
+			<button onclick="clearInputs()" tabindex="-1">🗑️ Ново изчисление</button>
+			<p style="font-size: small;">Също клавиш [интервал] за ново изчисление.</p>
 		</div>
+		<br>
 		<button onclick="saveItem()">💾 Запази за сравнение</button>
 		<br>
-		<br>
+		<hr>
 		<div id="items"></div>
 		<br>
-		<button onclick="editTable(this)">✏️ Редактиране</button>
+		<button onclick="editTable(this)">📝 Редактиране</button>
 		<br>
-		<button onclick="deleteItems()">Изтрий записи</button>
+		<button onclick="deleteItems()">⛔ Изтрий записи</button>
 		<br>
-		<button onclick="elementToggle(formulas)">Формули</button>
+		<button onclick="exportTableToJSON()">📥 Експортирай</button>
+		<button onclick="importTableFromJSON()">📤 Импортирай</button>
+		<br>
+		<button onclick="elementToggle(formulas)">ƒ Формули</button>
 		<div id="formulas" style="display: none;">
 			<img id="formulaTriangle" src="pricePerWeight.svg" alt="formulas triangle" />
 			<br>
@@ -137,6 +143,7 @@
 		<br>
 		<br>
 		<p><a href="mailto:bosadjo@proton.me">Контакт: bosadjo@proton.me</a></p>	
+		<input type="file" id="fileInput" style="display:none;" accept=".json" onchange="handleFileImport(event)">
 	</fieldset>
 	<script>
 		var price = document.getElementById('price')
@@ -327,12 +334,12 @@
 		function editTable(button) {
 			if (tableWithItems.isContentEditable) {
 				tableWithItems.contentEditable = false
-				button.textContent = '✏️ Редактиране'
+				button.textContent = '📝 Редактиране'
 				localStorage.setItem('priceItems', JSON.stringify(HTMLTableTo2DJSArray(tableWithItems, 1, 1)))
 				loadItems()
 			} else {
 				tableWithItems.contentEditable = true
-				button.textContent = '✏️💾 Запази промените'
+				button.textContent = '💾 Запази промените'
 			}
 		}
 
@@ -373,6 +380,76 @@
 				localStorage.setItem('theme', 'dark')
 			}
 			applyTheme()
+		}
+		function exportTableToJSON() {
+			let items = JSON.parse(localStorage.getItem('priceItems') || '[]')
+			if (items.length === 0) {
+				return
+			}
+			let currency = localStorage.getItem('currency') || 'EUR'
+			let exportData = {
+				currency: currency,
+				items: items,
+				exportDate: new Date().toISOString()
+			}
+			let dataStr = JSON.stringify(exportData, null, 2)
+			let dataBlob = new Blob([dataStr], { type: 'application/json' })
+			let url = URL.createObjectURL(dataBlob)
+			let link = document.createElement('a')
+			link.href = url
+			link.download = 'продукти с цена за кг ' + new Date().toISOString().slice(0, 10) + '.json'
+			document.body.appendChild(link)
+			link.click()
+			document.body.removeChild(link)
+			URL.revokeObjectURL(url)
+		}
+		function importTableFromJSON() {
+			document.getElementById('fileInput').click()
+		}
+		function handleFileImport(event) {
+			let file = event.target.files[0]
+			if (!file) return
+			let reader = new FileReader()
+			reader.onload = function(e) {
+				try {
+					let importData = JSON.parse(e.target.result)
+					if (!importData.items || !Array.isArray(importData.items)) {
+						alert('Невалиден JSON формат. Недостатъчни данни за импортиране.')
+						return
+					}
+					let currentCurrency = localStorage.getItem('currency') || 'EUR'
+					let importedCurrency = importData.currency || 'EUR'
+					let itemsToAdd = importData.items
+					if (importedCurrency !== currentCurrency) {
+						if (!confirm('Файлът е запазан в ' + importedCurrency + ', но текущата валута е ' + currentCurrency + '.\\nИскате ли да конвертирате цените автоматично?')) {
+							return
+						}
+						itemsToAdd = itemsToAdd.map(item => {
+							let newItem = [...item]
+							for (let j = 1; j <= 2; j++) {
+								let stored = String(newItem[j])
+								let num = parseFloat(stored.replace(',', '.').match(/[-\d\.]+/))
+								if (!isNaN(num)) {
+									if (importedCurrency === 'BGN' && currentCurrency === 'EUR') num = num / EUR_TO_BGN
+									if (importedCurrency === 'EUR' && currentCurrency === 'BGN') num = num * EUR_TO_BGN
+									let suffix = currentCurrency === 'EUR' ? ' €' : ' лв'
+									newItem[j] = num.toFixed(2) + suffix + (j === 1 ? '/кг' : '')
+								}
+							}
+							return newItem
+						})
+					}
+					let existingItems = JSON.parse(localStorage.getItem('priceItems') || '[]')
+					let mergedItems = existingItems.concat(itemsToAdd)
+					localStorage.setItem('priceItems', JSON.stringify(mergedItems))
+					loadItems()
+					//alert('Успешно импортирани ' + itemsToAdd.length + ' записа!')
+				} catch (error) {
+					alert('Грешка при четене на JSON файл: ' + error.message)
+				}
+			}
+			reader.readAsText(file)
+			event.target.value = ''
 		}
 	</script>
 </body>
