@@ -70,7 +70,7 @@
 		</label>
 		<!-- известни стойности -->
 		<p id="infoText" style="font-size: small;">
-			Въведете две произволни стойности,<br>
+			Въведете две произволни стойности и<br>
 			третата ще се изчисли автоматично.<br>
 		</p>
 		<br>
@@ -104,8 +104,10 @@
 			<label>Цена за кг:
 				<input step=".01" type="number" id="pricePerKG" placeholder="0.00"> <span id="unitLabel">€/кг</span>
 			</label>
-			<br>
-			<button id="calcButton" style="display: none;" onclick="calculatePricePerWeight()">Изчисли</button>
+			<div id="calcButton" style="display: none;">
+				<br>
+				<button onclick="calculatePricePerWeight()">Изчисли</button>
+			</div>
 			<br>
 			<button onclick="clearInputs()" tabindex="-1">🗑️ Ново изчисление</button>
 			<p style="font-size: small;">Клавиш [интервал] за ново изчисление.</p>
@@ -115,7 +117,6 @@
 			</label>
 			(незадължително, за сравнение)
 		</div>
-		<br>
 		<button onclick="saveItem()">💾 Запази за сравнение</button>
 		<br>
 		<br>
@@ -133,6 +134,7 @@
 			Тегло = Цена / Цена за килограм (<span id="formulasUnit2">€/кг</span>)<br>
 			Цена за килограм (<span id="formulasUnit3">€/кг</span>) = Цена / Тегло<br>
 		</div>
+		<br>
 		<br>
 		<p><a href="mailto:bosadjo@proton.me">Контакт: bosadjo@proton.me</a></p>	
 	</fieldset>
@@ -250,8 +252,8 @@
 				return
 			}
 			let items = JSON.parse(localStorage.getItem('priceItems'))
-			let suffix = (localStorage.getItem('currency') || 'EUR') === 'EUR' ? ' €/кг' : ' лв/кг'
-			items.push([itemName.value, pricePerKG.value + suffix])
+			let suffix = (localStorage.getItem('currency') || 'EUR') === 'EUR' ? ' €' : ' лв'
+			items.push([itemName.value, pricePerKG.value + suffix + '/кг', price.value + suffix, weight.value + ' ' + (weightUnit.value == "1000" ? 'г' : 'кг')])
 			localStorage.setItem('priceItems', JSON.stringify(items))
 			loadItems()
 		}
@@ -280,14 +282,14 @@
 		}
 		function loadItems() {
 			let curr = localStorage.getItem('currency') || 'EUR'
-			let unitSuffix = curr === 'EUR' ? '€/кг' : 'лв/кг'
-			var text = `<table id="tableWithItems"><tr><th><input id="mainCheckbox" type="checkbox" onclick="toggleCheckboxes(this)"></th><th>Име</th><th>${unitSuffix}</th></tr>`
+			let unitSuffix = curr === 'EUR' ? '€' : 'лв'
+			var text = `<table id="tableWithItems"><tr><th><input id="mainCheckbox" type="checkbox" onclick="toggleCheckboxes(this)"></th><th>Име</th><th>Цена/кг</th><th>Цена</th><th>Тегло</th></tr>`
 			let items = JSON.parse(localStorage.getItem('priceItems'))
 			for (var i = 0; i < items.length; i++) {
 				text += `<tr><td><input type="checkbox" onclick="checkCheckboxes()" name="item" value=${i}></td>`
 				for (let j = 0; j < items[i].length; j++) {
 					let cell = items[i][j]
-					if (j === 1) {
+					if (j === 1 || j === 2) {
 						// parse existing stored value and convert to current currency if needed
 						let stored = String(cell)
 						let storedCurrency = stored.includes('лв') ? 'BGN' : (stored.includes('€') ? 'EUR' : 'BGN')
@@ -295,7 +297,7 @@
 						if (!isNaN(num)) {
 							if (storedCurrency === 'BGN' && curr === 'EUR') num = num / EUR_TO_BGN
 							if (storedCurrency === 'EUR' && curr === 'BGN') num = num * EUR_TO_BGN
-							cell = num.toFixed(2) + ' ' + unitSuffix
+							cell = num.toFixed(2) + ' ' + unitSuffix + (j === 1 ? '/кг' : '')
 						}
 					}
 					text += '<td>' + cell + '</td>'
