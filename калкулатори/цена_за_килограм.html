@@ -102,7 +102,7 @@
 			</label>
 			<br>
 			<label>Цена за кг:
-				<input step=".01" type="number" id="pricePerKG" placeholder="0.00"> <span id="unitLabel">€/кг</span>
+				<input step=".01" type="number" id="pricePerKG" placeholder="0.00"> <span class="currencyPerWeight">€/кг</span>
 			</label>
 			<div id="calcButton" style="display: none;">
 				<br>
@@ -136,12 +136,12 @@
 		<div id="formulas" style="display: none;">
 			<img id="formulaTriangle" src="pricePerWeight.svg" alt="formulas triangle" />
 			<br>
-			Цена = Тегло * Цена за килограм (<span id="formulasUnit">€/кг</span>)<br>
-			Тегло = Цена / Цена за килограм (<span id="formulasUnit2">€/кг</span>)<br>
-			Цена за килограм (<span id="formulasUnit3">€/кг</span>) = Цена / Тегло<br>
+			Цена = Тегло * Цена за килограм (<span class="currencyPerWeight">€/кг</span>)<br>
+			Тегло = Цена / Цена за килограм (<span class="currencyPerWeight">€/кг</span>)<br>
+			Цена за килограм (<span class="currencyPerWeight">€/кг</span>) = Цена / Тегло<br>
 		</div>
 		<br>
-		<br>
+		<hr>
 		<p><a href="mailto:bosadjo@proton.me">Контакт: bosadjo@proton.me</a></p>	
 		<input type="file" id="fileInput" style="display:none;" accept=".json" onchange="handleFileImport(event)">
 	</fieldset>
@@ -151,10 +151,6 @@
 		var weightUnit = document.getElementById('weightUnit')
 		var pricePerKG = document.getElementById('pricePerKG')
 		var currencySelect = document.getElementById('currencySelect')
-		var unitLabel = document.getElementById('unitLabel')
-		var formulasUnit = document.getElementById('formulasUnit')
-		var formulasUnit2 = document.getElementById('formulasUnit2')
-		var formulasUnit3 = document.getElementById('formulasUnit3')
 		const EUR_TO_BGN = 1.95583
 		// current currency will be either 'EUR' or 'BGN'
 		function changeCurrency(newCurrency) {
@@ -180,10 +176,7 @@
 		}
 		function updateUnitLabels(curr) {
 			let unit = curr === 'EUR' ? '€/кг' : 'лв/кг'
-			unitLabel.textContent = unit
-			formulasUnit.textContent = unit
-			formulasUnit2.textContent = unit
-			formulasUnit3.textContent = unit
+			Array.from(document.getElementsByClassName("currencyPerWeight"), el => el.textContent = unit)
 		}
 		function toggleMode(mode) {
 			//if (document.querySelector('input[name=mode]:checked').value === 'manual') {
@@ -421,7 +414,7 @@
 					let importedCurrency = importData.currency || 'EUR'
 					let itemsToAdd = importData.items
 					if (importedCurrency !== currentCurrency) {
-						if (!confirm('Файлът е запазан в ' + importedCurrency + ', но текущата валута е ' + currentCurrency + '.\\nИскате ли да конвертирате цените автоматично?')) {
+						if (!confirm('Файлът е запазен в ' + importedCurrency + ', но текущата валута е ' + currentCurrency + '.\\nИскате ли да конвертирате цените автоматично?')) {
 							return
 						}
 						itemsToAdd = itemsToAdd.map(item => {
