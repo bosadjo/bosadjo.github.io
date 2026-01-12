@@ -44,6 +44,13 @@
 			text-align: center;
 			justify-content: center;
 		}
+		/* Mobile-only styles */
+		@media (max-width: 480px) {
+			.mobileFix {
+				width: 80vw;
+				justify-self: center;
+			}
+		}
 	</style>
 	<style id="dark-theme">
 		* {
@@ -136,7 +143,7 @@
 		<button onclick="saveItem()">💾 Запази за сравнение</button>
 		<br>
 		<hr>
-		<div id="items"></div>
+		<div id="items" style="overflow-x:auto;" class="mobileFix"></div>
 		<br>
 		<button onclick="editTable(this)">📝 Редактиране</button>
 		<br>
