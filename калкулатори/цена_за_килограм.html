@@ -114,6 +114,19 @@
 			<label>Име на продукт:
 				<input type="text" id="itemName" placeholder="Име">
 			</label>
+			<label>Марка:
+				<input type="text" id="itemBrand" placeholder="Марка">
+			</label>
+			<label>Магазин:
+				<input type="text" id="itemStore" placeholder="Магазин">
+			</label>
+			<label>Харесвам:
+				<select id="itemLikes">
+					<option value="">Избор</option>
+					<option value="✅">✅</option>
+					<option value="⛔">⛔</option>
+				</select>
+			</label>
 			<p style="font-size: medium;">(незадължително, за сравнение)</p>
 			<br>
 			<button onclick="clearInputs()" tabindex="-1">🗑️ Ново изчисление</button>
@@ -245,6 +258,7 @@
 				input.value = ''
 				input.readOnly = false
 			})
+			document.getElementById('itemLikes').value = ''
 		}
 
 		function saveItem() {
@@ -253,7 +267,7 @@
 			}
 			let items = JSON.parse(localStorage.getItem('priceItems'))
 			let suffix = (localStorage.getItem('currency') || 'EUR') === 'EUR' ? ' €' : ' лв'
-			items.push([itemName.value, pricePerKG.value + suffix + '/кг', price.value + suffix, weight.value + ' ' + (weightUnit.value == "1000" ? 'г' : 'кг')])
+			items.push([itemLikes.value, itemName.value, itemBrand.value, itemStore.value, pricePerKG.value + suffix + '/кг', price.value + suffix, weight.value + ' ' + (weightUnit.value == "1000" ? 'г' : 'кг')])
 			localStorage.setItem('priceItems', JSON.stringify(items))
 			loadItems()
 		}
@@ -283,13 +297,13 @@
 		function loadItems() {
 			let curr = localStorage.getItem('currency') || 'EUR'
 			let unitSuffix = curr === 'EUR' ? '€' : 'лв'
-			var text = `<table id="tableWithItems"><tr><th><input id="mainCheckbox" type="checkbox" onclick="toggleCheckboxes(this)"></th><th>Име</th><th>Цена/кг</th><th>Цена</th><th>Тегло</th></tr>`
+			var text = `<table id="tableWithItems"><tr><th><input id="mainCheckbox" type="checkbox" onclick="toggleCheckboxes(this)"></th><th>Харесвам</th><th>Име</th><th>Марка</th><th>Магазин</th><th>Цена/кг</th><th>Цена</th><th>Тегло</th></tr>`
 			let items = JSON.parse(localStorage.getItem('priceItems'))
 			for (var i = 0; i < items.length; i++) {
 				text += `<tr><td><input type="checkbox" onclick="checkCheckboxes()" name="item" value=${i}></td>`
 				for (let j = 0; j < items[i].length; j++) {
 					let cell = items[i][j]
-					if (j === 1 || j === 2) {
+					if (j === 4 || j === 5) {
 						// parse existing stored value and convert to current currency if needed
 						let stored = String(cell)
 						let storedCurrency = stored.includes('лв') ? 'BGN' : (stored.includes('€') ? 'EUR' : 'BGN')
@@ -297,7 +311,7 @@
 						if (!isNaN(num)) {
 							if (storedCurrency === 'BGN' && curr === 'EUR') num = num / EUR_TO_BGN
 							if (storedCurrency === 'EUR' && curr === 'BGN') num = num * EUR_TO_BGN
-							cell = num.toFixed(2) + ' ' + unitSuffix + (j === 1 ? '/кг' : '')
+							cell = num.toFixed(2) + ' ' + unitSuffix + (j === 4 ? '/кг' : '')
 						}
 					}
 					text += '<td>' + cell + '</td>'
