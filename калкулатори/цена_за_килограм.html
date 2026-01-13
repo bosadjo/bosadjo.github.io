@@ -274,6 +274,7 @@
 			}
 			let items = JSON.parse(localStorage.getItem('priceItems'))
 			let suffix = (localStorage.getItem('currency') || 'EUR') === 'EUR' ? ' €' : ' лв'
+			let today = new Date().toISOString().slice(0, 10)
 			let newItem = {
 				likes: itemLikes.value,
 				name: itemName.value,
@@ -281,7 +282,8 @@
 				store: itemStore.value,
 				pricePerKG: pricePerKG.value + suffix + '/кг',
 				price: price.value + suffix,
-				weight: weight.value + ' ' + (weightUnit.value == "1000" ? 'г' : 'кг')
+				weight: weight.value + ' ' + (weightUnit.value == "1000" ? 'г' : 'кг'),
+				date: today
 			}
 			items.push(newItem)
 			localStorage.setItem('priceItems', JSON.stringify(items))
@@ -310,8 +312,8 @@
 			})
 			mainCheckbox.checked = allChecked
 		}
-		const columnOrder = ['likes', 'name', 'brand', 'store', 'pricePerKG', 'price', 'weight']
-		const columnLabels = ['Харесвам', 'Име', 'Марка', 'Магазин', 'Цена/кг', 'Цена', 'Тегло']
+		const columnOrder = ['likes', 'name', 'brand', 'store', 'pricePerKG', 'price', 'weight', 'date']
+		const columnLabels = ['Харесвам', 'Име', 'Марка', 'Магазин', 'Цена/кг', 'Цена', 'Тегло', 'Към дата']
 		
 		function saveSortSettings(column, direction) {
 			let sortSettings = {
