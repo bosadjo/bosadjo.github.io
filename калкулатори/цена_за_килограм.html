@@ -310,12 +310,80 @@
 			})
 			mainCheckbox.checked = allChecked
 		}
+		const columnOrder = ['likes', 'name', 'brand', 'store', 'pricePerKG', 'price', 'weight']
+		const columnLabels = ['Харесвам', 'Име', 'Марка', 'Магазин', 'Цена/кг', 'Цена', 'Тегло']
+		
+		function saveSortSettings(column, direction) {
+			let sortSettings = {
+				column: column,
+				direction: direction
+			}
+			localStorage.setItem('priceItemsSortSettings', JSON.stringify(sortSettings))
+		}
+		
+		function getSortSettings() {
+			let defaults = { column: 'likes', direction: 'asc' }
+			let saved = localStorage.getItem('priceItemsSortSettings')
+			return saved ? JSON.parse(saved) : defaults
+		}
+		
+		function sortItems(items, column, direction) {
+			return items.sort((a, b) => {
+				let aVal = a[column] || ''
+				let bVal = b[column] || ''
+				
+				// For price columns, extract numeric value
+				if (column === 'pricePerKG' || column === 'price') {
+					aVal = parseFloat(String(aVal).replace(',', '.').match(/[-\d\.]+/) || 0)
+					bVal = parseFloat(String(bVal).replace(',', '.').match(/[-\d\.]+/) || 0)
+				}
+				// For weight column, extract numeric value
+				else if (column === 'weight') {
+					aVal = parseFloat(String(aVal).match(/[-\d\.]+/) || 0)
+					bVal = parseFloat(String(bVal).match(/[-\d\.]+/) || 0)
+				}
+				// String comparison for other columns
+				else {
+					aVal = String(aVal).toLowerCase()
+					bVal = String(bVal).toLowerCase()
+					if (direction === 'asc') {
+						return aVal.localeCompare(bVal, 'bg')
+					} else {
+						return bVal.localeCompare(aVal, 'bg')
+					}
+				}
+				
+				// Numeric comparison
+				if (direction === 'asc') {
+					return aVal - bVal
+				} else {
+					return bVal - aVal
+				}
+			})
+		}
+		
 		function loadItems() {
 			let curr = localStorage.getItem('currency') || 'EUR'
 			let unitSuffix = curr === 'EUR' ? '€' : 'лв'
-			var text = `<table id="tableWithItems"><tr><th><input id="mainCheckbox" type="checkbox" onclick="toggleCheckboxes(this)"></th><th>Харесвам</th><th>Име</th><th>Марка</th><th>Магазин</th><th>Цена/кг</th><th>Цена</th><th>Тегло</th></tr>`
+			let sortSettings = getSortSettings()
+			
+			// Build header with sortable columns
+			var text = `<table id="tableWithItems"><tr><th><input id="mainCheckbox" type="checkbox" onclick="toggleCheckboxes(this)"></th>`
+			for (let i = 0; i < columnLabels.length; i++) {
+				let colName = columnOrder[i]
+				let sortIndicator = ''
+				if (sortSettings.column === colName) {
+					sortIndicator = sortSettings.direction === 'asc' ? ' ▲' : ' ▼'
+				}
+				text += `<th style="cursor: pointer; user-select: none;" onclick="handleSortClick('${colName}')">${columnLabels[i]}${sortIndicator}</th>`
+			}
+			text += '</tr>'
+			
 			let items = JSON.parse(localStorage.getItem('priceItems'))
-			const columnOrder = ['likes', 'name', 'brand', 'store', 'pricePerKG', 'price', 'weight']
+			
+			// Sort items according to saved settings
+			items = sortItems([...items], sortSettings.column, sortSettings.direction)
+			
 			for (var i = 0; i < items.length; i++) {
 				let item = items[i]
 				text += `<tr><td><input type="checkbox" onclick="checkCheckboxes()" name="item" value=${i}></td>`
@@ -339,6 +407,20 @@
 			}
 			document.getElementById('items').innerHTML = text + '</table>'
 		}
+		
+		function handleSortClick(column) {
+			let sortSettings = getSortSettings()
+			if (sortSettings.column === column) {
+				// Toggle direction if clicking same column
+				sortSettings.direction = sortSettings.direction === 'asc' ? 'desc' : 'asc'
+			} else {
+				// New column, default to ascending
+				sortSettings.column = column
+				sortSettings.direction = 'asc'
+			}
+			saveSortSettings(sortSettings.column, sortSettings.direction)
+			loadItems()
+		}
 		loadItems()
 		function deleteAllItems() {
 			localStorage.setItem('priceItems', JSON.stringify([]))
@@ -346,7 +428,6 @@
 		function HTMLTableTo2DJSArray(table, ignoreRowsCount = 0, ignoreColsCount = 0) {
 			let rows = table.querySelector('tbody').querySelectorAll('tr')
 			let arr = []
-			const columnOrder = ['likes', 'name', 'brand', 'store', 'pricePerKG', 'price', 'weight']
 			for (let i = 0 + ignoreRowsCount; i < rows.length; i++) {
 				let obj = {}
 				let cols = rows[i].querySelectorAll('td')
