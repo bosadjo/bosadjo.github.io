@@ -274,7 +274,16 @@
 			}
 			let items = JSON.parse(localStorage.getItem('priceItems'))
 			let suffix = (localStorage.getItem('currency') || 'EUR') === 'EUR' ? ' €' : ' лв'
-			items.push([itemLikes.value, itemName.value, itemBrand.value, itemStore.value, pricePerKG.value + suffix + '/кг', price.value + suffix, weight.value + ' ' + (weightUnit.value == "1000" ? 'г' : 'кг')])
+			let newItem = {
+				likes: itemLikes.value,
+				name: itemName.value,
+				brand: itemBrand.value,
+				store: itemStore.value,
+				pricePerKG: pricePerKG.value + suffix + '/кг',
+				price: price.value + suffix,
+				weight: weight.value + ' ' + (weightUnit.value == "1000" ? 'г' : 'кг')
+			}
+			items.push(newItem)
 			localStorage.setItem('priceItems', JSON.stringify(items))
 			loadItems()
 		}
@@ -282,7 +291,7 @@
 			let items = JSON.parse(localStorage.getItem('priceItems'))
 			let newItems = []
 			document.querySelectorAll('input[type=checkbox][name=item]:not(:checked)').forEach(element => {
-				newItems.push(items[element.value])
+				newItems.push(items[parseInt(element.value)])
 			});
 			localStorage.setItem('priceItems', JSON.stringify(newItems))
 			loadItems()
@@ -306,11 +315,14 @@
 			let unitSuffix = curr === 'EUR' ? '€' : 'лв'
 			var text = `<table id="tableWithItems"><tr><th><input id="mainCheckbox" type="checkbox" onclick="toggleCheckboxes(this)"></th><th>Харесвам</th><th>Име</th><th>Марка</th><th>Магазин</th><th>Цена/кг</th><th>Цена</th><th>Тегло</th></tr>`
 			let items = JSON.parse(localStorage.getItem('priceItems'))
+			const columnOrder = ['likes', 'name', 'brand', 'store', 'pricePerKG', 'price', 'weight']
 			for (var i = 0; i < items.length; i++) {
+				let item = items[i]
 				text += `<tr><td><input type="checkbox" onclick="checkCheckboxes()" name="item" value=${i}></td>`
-				for (let j = 0; j < items[i].length; j++) {
-					let cell = items[i][j]
-					if (j === 4 || j === 5) {
+				for (let j = 0; j < columnOrder.length; j++) {
+					let key = columnOrder[j]
+					let cell = item[key] || ''
+					if (key === 'pricePerKG' || key === 'price') {
 						// parse existing stored value and convert to current currency if needed
 						let stored = String(cell)
 						let storedCurrency = stored.includes('лв') ? 'BGN' : (stored.includes('€') ? 'EUR' : 'BGN')
@@ -318,7 +330,7 @@
 						if (!isNaN(num)) {
 							if (storedCurrency === 'BGN' && curr === 'EUR') num = num / EUR_TO_BGN
 							if (storedCurrency === 'EUR' && curr === 'BGN') num = num * EUR_TO_BGN
-							cell = num.toFixed(2) + ' ' + unitSuffix + (j === 4 ? '/кг' : '')
+							cell = num.toFixed(2) + ' ' + unitSuffix + (key === 'pricePerKG' ? '/кг' : '')
 						}
 					}
 					text += '<td>' + cell + '</td>'
@@ -334,15 +346,18 @@
 		function HTMLTableTo2DJSArray(table, ignoreRowsCount = 0, ignoreColsCount = 0) {
 			let rows = table.querySelector('tbody').querySelectorAll('tr')
 			let arr = []
+			const columnOrder = ['likes', 'name', 'brand', 'store', 'pricePerKG', 'price', 'weight']
 			for (let i = 0 + ignoreRowsCount; i < rows.length; i++) {
-				arr.push([])
+				let obj = {}
 				let cols = rows[i].querySelectorAll('td')
 				for (let j = 0 + ignoreColsCount; j < cols.length; j++) {
-					arr[i - ignoreRowsCount].push(cols[j].textContent)
+					let colIndex = j - ignoreColsCount
+					if (colIndex < columnOrder.length) {
+						obj[columnOrder[colIndex]] = cols[j].textContent
+					}
 				}
+				arr.push(obj)
 			}
-			// Verification
-			// console.log('Is parsed array equal existing array? ' + (JSON.stringify(arr) === localStorage.getItem('priceItems')))
 			return arr
 		}
 		function editTable(button) {
@@ -439,15 +454,21 @@
 							return
 						}
 						itemsToAdd = itemsToAdd.map(item => {
-							let newItem = [...item]
-							for (let j = 1; j <= 2; j++) {
-								let stored = String(newItem[j])
+						let newItem = {}
+						for (let key in item) {
+							if (key === 'pricePerKG' || key === 'price') {
+								let stored = String(item[key])
 								let num = parseFloat(stored.replace(',', '.').match(/[-\d\.]+/))
 								if (!isNaN(num)) {
 									if (importedCurrency === 'BGN' && currentCurrency === 'EUR') num = num / EUR_TO_BGN
 									if (importedCurrency === 'EUR' && currentCurrency === 'BGN') num = num * EUR_TO_BGN
 									let suffix = currentCurrency === 'EUR' ? ' €' : ' лв'
-									newItem[j] = num.toFixed(2) + suffix + (j === 1 ? '/кг' : '')
+									newItem[key] = num.toFixed(2) + suffix + (key === 'pricePerKG' ? '/кг' : '')
+								} else {
+									newItem[key] = item[key]
+								}
+							} else {
+								newItem[key] = item[key]
 								}
 							}
 							return newItem
