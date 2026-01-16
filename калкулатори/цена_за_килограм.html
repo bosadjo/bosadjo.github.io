@@ -3,7 +3,7 @@
 
 <head>
 	<meta charset="utf-8">
-	<title>Калкулатор: Цена за килограм (или литър) (изчистен интерфейс от @bosadjo)</title>
+	<title>Калкулатор: Цена за килограм (или литър) + Запазване в таблица за сравнение (изчистен интерфейс от @bosadjo)</title>
 	<style>
 		label {
 			display: block;
@@ -92,23 +92,21 @@
 		<!-- <button>Настройки ⚙</button>
 	<br> -->
 		<div id="mainEverything" oninput="calculatePricePerWeight()">
-			<label>Цена:
+			<label>Цена<span style="color: lightcoral;">*</span>:
 				<input step=".01" type="number" id="price" placeholder="0.00" autofocus>
 				<select id="currencySelect" onchange="changeCurrency(this.value)" tabindex="-1">
 					<option value="EUR">€</option>
 					<option value="BGN">лв</option>
 				</select>
 			</label>
-			<br>
-			<label>Тегло:
+			<label>Тегло<span style="color: lightcoral;">*</span>:
 				<input step="1" type="number" id="weight" placeholder="0">
 				<select oninput="unitChangeInputStep(this.value)" id="weightUnit" tabindex="-1">
 					<option value="1000">гр</option>
 					<option value="1">кг</option>
 				</select>
 			</label>
-			<br>
-			<label>Цена за кг:
+			<label>Цена за кг<span style="color: lightcoral;">*</span>:
 				<input step=".01" type="number" id="pricePerKG" placeholder="0.00"> <span class="currencyPerWeight">€/кг</span>
 			</label>
 			<div id="calcButton" style="display: none;">
@@ -117,7 +115,6 @@
 				<br>
 				<br>
 			</div>
-			<br>
 			<label>Име на продукт:
 				<input type="text" id="itemName" placeholder="Име">
 			</label>
@@ -134,7 +131,7 @@
 					<option value="⛔">⛔</option>
 				</select>
 			</label>
-			<p style="font-size: medium;">(незадължително, за сравнение)</p>
+			<p style="font-size: medium;">(незадължителни, за сравнение)</p>
 			<br>
 			<button onclick="clearInputs()" tabindex="-1">🗑️ Ново изчисление</button>
 			<p style="font-size: small;">Също клавиш [интервал] за ново изчисление.</p>
@@ -143,6 +140,7 @@
 		<button onclick="saveItem()">💾 Запази за сравнение</button>
 		<br>
 		<hr>
+		<p>Таблица за сравнение на цени</p>
 		<div id="items" style="overflow-x:auto;" class="mobileFix"></div>
 		<br>
 		<button onclick="editTable(this)">📝 Редактиране</button>
