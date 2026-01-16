@@ -93,21 +93,17 @@
 	<br> -->
 		<div id="mainEverything" oninput="calculatePricePerWeight()">
 			<label>Цена<span style="color: lightcoral;">*</span>:
-				<input step=".01" type="number" id="price" placeholder="0.00" autofocus>
-				<select id="currencySelect" onchange="changeCurrency(this.value)" tabindex="-1">
-					<option value="EUR">€</option>
-					<option value="BGN">лв</option>
-				</select>
+				<input min="0" step=".01" type="number" id="price" placeholder="0.00" autofocus>
+				<label style="display: inline;"><input tabindex="-1" type="radio" name="currency" value="EUR" onchange="changeCurrency(this.value)">€</label>
+				<label style="display: inline;"><input tabindex="-1" type="radio" name="currency" value="BGN" onchange="changeCurrency(this.value)">лв</label>
 			</label>
 			<label>Тегло<span style="color: lightcoral;">*</span>:
-				<input step="1" type="number" id="weight" placeholder="0">
-				<select oninput="unitChangeInputStep(this.value)" id="weightUnit" tabindex="-1">
-					<option value="1000">гр</option>
-					<option value="1">кг</option>
-				</select>
+				<input min="0" step="1" type="number" id="weight" placeholder="0">
+				<label style="display: inline;"><input tabindex="-1" type="radio" name="weightUnit" value="1000" oninput="unitChangeInputStep(this.value)">гр</label>
+				<label style="display: inline;"><input tabindex="-1" type="radio" name="weightUnit" value="1" oninput="unitChangeInputStep(this.value)">кг</label>
 			</label>
 			<label>Цена за кг<span style="color: lightcoral;">*</span>:
-				<input step=".01" type="number" id="pricePerKG" placeholder="0.00"> <span class="currencyPerWeight">€/кг</span>
+				<input min="0" step=".01" type="number" id="pricePerKG" placeholder="0.00"> <span class="currencyPerWeight">€/кг</span>
 			</label>
 			<div id="calcButton" style="display: none;">
 				<br>
@@ -125,11 +121,8 @@
 				<input type="text" id="itemStore" placeholder="Магазин">
 			</label>
 			<label>Харесвам:
-				<select id="itemLikes">
-					<option value="">Избор</option>
-					<option value="✅">✅</option>
-					<option value="⛔">⛔</option>
-				</select>
+				<label style="display: inline;"><input type="radio" name="likeItem" value="✅">✅</label>
+				<label style="display: inline;"><input type="radio" name="likeItem" value="⛔">⛔</label>
 			</label>
 			<p style="font-size: medium;">(незадължителни, за сравнение)</p>
 			<br>
@@ -166,9 +159,10 @@
 	<script>
 		var price = document.getElementById('price')
 		var weight = document.getElementById('weight')
-		var weightUnit = document.getElementById('weightUnit')
+		var weightUnit = localStorage.getItem('weightUnit') || '1000'
+		document.querySelector('input[name="weightUnit"][value="' + weightUnit + '"]').checked = true;
+		weightUnit = document.querySelector('input[name="weightUnit"]:checked')
 		var pricePerKG = document.getElementById('pricePerKG')
-		var currencySelect = document.getElementById('currencySelect')
 		const EUR_TO_BGN = 1.95583
 		// current currency will be either 'EUR' or 'BGN'
 		function changeCurrency(newCurrency) {
@@ -212,6 +206,8 @@
 			}
 		}
 		function unitChangeInputStep(unit) {
+			weightUnit = document.querySelector('input[name="weightUnit"]:checked')
+			localStorage.setItem('weightUnit', unit)
 			if (unit === '1') {
 				weight.step = 0.001
 				if (weight.value !== '') {
@@ -227,6 +223,7 @@
 			//   weight.value /= weightUnit.querySelector(':not(:checked)').value
 			// }
 		}
+		unitChangeInputStep(weightUnit.value)
 		function calculatePricePerWeight() {
 			// може да има 1 стотинка или 1 грам разлика от тази в магазина в зависимост от това как закръглят
 			if (price.value !== '' && weight.value !== '' && !price.readOnly && !weight.readOnly) {
@@ -263,7 +260,9 @@
 				input.value = ''
 				input.readOnly = false
 			})
-			document.getElementById('itemLikes').value = ''
+			document.querySelectorAll('input[name="likeItem"]:checked').forEach(radio => {
+				radio.checked = false
+			})
 		}
 
 		function saveItem() {
@@ -274,7 +273,7 @@
 			let suffix = (localStorage.getItem('currency') || 'EUR') === 'EUR' ? ' €' : ' лв'
 			let today = new Date().toISOString().slice(0, 10)
 			let newItem = {
-				likes: itemLikes.value,
+				likes: document.querySelector('input[name="likeItem"]:checked')?.value || '',
 				name: itemName.value,
 				brand: itemBrand.value,
 				store: itemStore.value,
@@ -289,6 +288,8 @@
 		}
 		function deleteItems() {
 			let items = JSON.parse(localStorage.getItem('priceItems'))
+			let sortSettings = getSortSettings()
+			items = sortItems([...items], sortSettings.column, sortSettings.direction)
 			let newItems = []
 			document.querySelectorAll('input[type=checkbox][name=item]:not(:checked)').forEach(element => {
 				newItems.push(items[parseInt(element.value)])
@@ -480,7 +481,7 @@
 		applyTheme()
 		// initialize currency (default EUR)
 		var initialCurrency = localStorage.getItem('currency') || 'EUR'
-		currencySelect.value = initialCurrency
+		document.querySelector('input[name="currency"][value="' + initialCurrency + '"]').checked = true;
 		updateUnitLabels(initialCurrency)
 		localStorage.setItem('currency', initialCurrency)
 		function toggleLightDarkTheme() {
