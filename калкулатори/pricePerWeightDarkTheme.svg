@@ -104,12 +104,10 @@
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.46667px;font-family:Arial;-inkscape-font-specification:Arial;opacity:1;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
-       x="53.492981"
-       y="73.976425"
        id="text16214"><tspan
          id="tspan16212"
          style="stroke-width:0;-inkscape-font-specification:Arial;font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;stroke:none;stroke-opacity:1;stroke-dasharray:none;fill:#ffffff;fill-opacity:1"
-         x="53.492981"
-         y="73.976425">лв/кг</tspan></text>
+         x="49"
+         y="73.976425">Цена/кг</tspan></text>
   </g>
 </svg>
