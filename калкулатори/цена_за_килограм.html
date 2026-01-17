@@ -323,12 +323,15 @@
 		}
 		
 		function getSortSettings() {
-			let defaults = { column: 'likes', direction: 'asc' }
+			let defaults = { column: 'likes', direction: 'none' }
 			let saved = localStorage.getItem('priceItemsSortSettings')
 			return saved ? JSON.parse(saved) : defaults
 		}
 		
 		function sortItems(items, column, direction) {
+			if (direction === 'none') {
+				return items
+			}
 			return items.sort((a, b) => {
 				let aVal = a[column] || ''
 				let bVal = b[column] || ''
@@ -374,7 +377,12 @@
 				let colName = columnOrder[i]
 				let sortIndicator = ''
 				if (sortSettings.column === colName) {
-					sortIndicator = sortSettings.direction === 'asc' ? ' ▲' : ' ▼'
+					if (sortSettings.direction === 'asc') {
+						sortIndicator = ' ▲'
+					} else if (sortSettings.direction === 'desc') {
+						sortIndicator = ' ▼'
+					}
+					// For 'none', no indicator
 				}
 				text += `<th style="cursor: pointer; user-select: none;" onclick="handleSortClick('${colName}')">${columnLabels[i]}${sortIndicator}</th>`
 			}
@@ -412,8 +420,14 @@
 		function handleSortClick(column) {
 			let sortSettings = getSortSettings()
 			if (sortSettings.column === column) {
-				// Toggle direction if clicking same column
-				sortSettings.direction = sortSettings.direction === 'asc' ? 'desc' : 'asc'
+				// Cycle direction: asc -> desc -> none -> asc...
+				if (sortSettings.direction === 'asc') {
+					sortSettings.direction = 'desc'
+				} else if (sortSettings.direction === 'desc') {
+					sortSettings.direction = 'none'
+				} else {
+					sortSettings.direction = 'asc'
+				}
 			} else {
 				// New column, default to ascending
 				sortSettings.column = column
