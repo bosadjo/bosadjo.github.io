@@ -7,6 +7,7 @@
 	<style>
 		label {
 			display: block;
+			position: relative;
 		}
 
 		input[type=text],
@@ -44,6 +45,23 @@
 			text-align: center;
 			justify-content: center;
 		}
+		.dropdown {
+			display: none;
+			position: absolute;
+			justify-self: center;
+			background: white;
+			border: 1px solid gray;
+			max-height: 200px;
+			overflow-y: auto;
+			z-index: 1000;
+		}
+		.option {
+			padding: 5px;
+			cursor: pointer;
+		}
+		.option:hover {
+			background: lightgray;
+		}
 		/* Mobile-only styles */
 		@media (max-width: 480px) {
 			.mobileFix {
@@ -60,6 +78,13 @@
 
 		input:read-only {
 			background: green;
+		}
+		.dropdown {
+			background: black;
+			border: 1px solid white;
+		}
+		.option:hover {
+			background: gray;
 		}
 	</style>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -112,14 +137,20 @@
 				<br>
 			</div>
 			<label>Име на продукт:
-				<input type="text" id="itemName" placeholder="Име">
+				<input type="text" id="itemName" placeholder="Име" list="itemNameList">
 			</label>
+			<div class="dropdown" id="itemNameDropdown"></div>
 			<label>Марка:
-				<input type="text" id="itemBrand" placeholder="Марка">
+				<input type="text" id="itemBrand" placeholder="Марка" list="itemBrandList">
 			</label>
+			<div class="dropdown" id="itemBrandDropdown"></div>
 			<label>Магазин:
-				<input type="text" id="itemStore" placeholder="Магазин">
+				<input type="text" id="itemStore" placeholder="Магазин" list="itemStoreList">
 			</label>
+			<div class="dropdown" id="itemStoreDropdown"></div>
+			<datalist id="itemNameList"></datalist>
+			<datalist id="itemBrandList"></datalist>
+			<datalist id="itemStoreList"></datalist>
 			<label>Харесвам:
 				<label style="display: inline;"><input type="radio" name="likeItem" value="✅">✅</label>
 				<label style="display: inline;"><input type="radio" name="likeItem" value="⛔">⛔</label>
@@ -415,6 +446,7 @@
 				text += '</tr>'
 			}
 			document.getElementById('items').innerHTML = text + '</table>'
+			updateAutocompleteLists()
 		}
 		
 		function handleSortClick(column) {
@@ -437,6 +469,98 @@
 			loadItems()
 		}
 		loadItems()
+		function updateAutocompleteLists() {
+			let items = JSON.parse(localStorage.getItem('priceItems') || '[]')
+			let names = new Set()
+			let brands = new Set()
+			let stores = new Set()
+			items.forEach(item => {
+				if (item.name) names.add(item.name)
+				if (item.brand) brands.add(item.brand)
+				if (item.store) stores.add(item.store)
+			})
+			/* let nameList = document.getElementById('itemNameList')
+			nameList.innerHTML = ''
+			names.forEach(name => {
+				let option = document.createElement('option')
+				option.value = name
+				nameList.appendChild(option)
+			})
+			let brandList = document.getElementById('itemBrandList')
+			brandList.innerHTML = ''
+			brands.forEach(brand => {
+				let option = document.createElement('option')
+				option.value = brand
+				brandList.appendChild(option)
+			})
+			let storeList = document.getElementById('itemStoreList')
+			storeList.innerHTML = ''
+			stores.forEach(store => {
+				let option = document.createElement('option')
+				option.value = store
+				storeList.appendChild(option)
+			}) */
+			// Populate dropdowns
+			let nameDropdown = document.getElementById('itemNameDropdown')
+			nameDropdown.innerHTML = ''
+			names.forEach(name => {
+				let div = document.createElement('div')
+				div.className = 'option'
+				div.textContent = name
+				div.onclick = () => {
+					document.getElementById('itemName').value = name
+					nameDropdown.style.display = 'none'
+				}
+				nameDropdown.appendChild(div)
+			})
+			let brandDropdown = document.getElementById('itemBrandDropdown')
+			brandDropdown.innerHTML = ''
+			brands.forEach(brand => {
+				let div = document.createElement('div')
+				div.className = 'option'
+				div.textContent = brand
+				div.onclick = () => {
+					document.getElementById('itemBrand').value = brand
+					brandDropdown.style.display = 'none'
+				}
+				brandDropdown.appendChild(div)
+			})
+			let storeDropdown = document.getElementById('itemStoreDropdown')
+			storeDropdown.innerHTML = ''
+			stores.forEach(store => {
+				let div = document.createElement('div')
+				div.className = 'option'
+				div.textContent = store
+				div.onclick = () => {
+					document.getElementById('itemStore').value = store
+					storeDropdown.style.display = 'none'
+				}
+				storeDropdown.appendChild(div)
+			})
+		}
+		// Add event listeners for dropdowns
+		let inputs = ['itemName', 'itemBrand', 'itemStore']
+		inputs.forEach(id => {
+			let input = document.getElementById(id)
+			let dropdown = document.getElementById(id + 'Dropdown')
+			input.onfocus = () => {
+				dropdown.style.display = 'inline-block'
+			}
+			input.onblur = () => {
+				setTimeout(() => dropdown.style.display = 'none', 150)
+			}
+			input.oninput = () => {
+				let value = input.value.toLowerCase()
+				let options = dropdown.querySelectorAll('.option')
+				options.forEach(opt => {
+					if (opt.textContent.toLowerCase().includes(value)) {
+						opt.style.display = 'block'
+					} else {
+						opt.style.display = 'none'
+					}
+				})
+			}
+		})
 		function deleteAllItems() {
 			localStorage.setItem('priceItems', JSON.stringify([]))
 		}
