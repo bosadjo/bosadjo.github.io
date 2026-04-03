@@ -4,10 +4,10 @@
 <head>
 	<meta charset="utf-8">
 	<title>Калкулатор Цена за Килограм (или литър) + Запазване в таблица за сравнение (изчистен интерфейс от @bosadjo)</title>
-	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-	<link rel="manifest" href="/site.webmanifest">
+	<link rel="apple-touch-icon" sizes="180x180" href="цена_за_килограм/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="цена_за_килограм/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="цена_за_килограм/favicon-16x16.png">
+	<link rel="manifest" href="цена_за_килограм/site.webmanifest">
 	<style>
 		label {
 			display: block;
@@ -104,7 +104,7 @@
 </script>
 <body>
 	<fieldset>
-		<legend>Калкулатор: Цена за килограм (или литър)</legend>
+		<legend>Калкулатор Цена за Килограм (или литър)</legend>
 		<button id="themeButton" onclick="toggleLightDarkTheme()" title="Toggle Light/Dark Theme"></button>
 		<label>Режим:
 			<select id="modeSelect" onchange="toggleMode(this.value)">
@@ -188,7 +188,7 @@
 		<br>
 		<button onclick="elementToggle(formulas)">ƒ Формули</button>
 		<div id="formulas" style="display: none;">
-			<img id="formulaTriangle" src="pricePerWeight.svg" alt="formulas triangle" />
+			<img id="formulaTriangle" src="цена_за_килограм/цена_за_килограм_light_theme.svg" alt="formulas triangle" />
 			<br>
 			Цена = Тегло * Цена за килограм (<span class="currencyPerWeight">€/кг</span>)<br>
 			Тегло = Цена / Цена за килограм (<span class="currencyPerWeight">€/кг</span>)<br>
@@ -618,11 +618,11 @@
 			if (localStorage.getItem('theme') === 'dark') {
 				document.getElementById('dark-theme').disabled = false
 				themeText.textContent = "Светла тема"
-				formulaTriangle.src = "pricePerWeightDarkTheme.svg"
+				formulaTriangle.src = "цена_за_килограм/цена_за_килограм_dark_theme.svg"
 			} else {
 				document.getElementById('dark-theme').disabled = true
 				themeText.textContent = "Тъмна тема"
-				formulaTriangle.src = "pricePerWeight.svg"
+				formulaTriangle.src = "цена_за_килограм/цена_за_килограм_light_theme.svg"
 			}
 		}
 		if (localStorage.getItem('theme') === null) {
