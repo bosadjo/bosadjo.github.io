@@ -105,7 +105,7 @@ select { width: 100%; min-height: 46px; padding: 9px 12px; border: 1px solid #cf
 .variant-row label { flex: 0 0 auto; font-weight: 700; font-size: .86rem; }
 .variant-row select { max-width: 360px; min-height: 40px; }
 @media (max-width: 680px) { .dictionary-controls { grid-template-columns: 1fr; } .variant-row { align-items: stretch; flex-direction: column; gap: 4px; } .variant-row select { max-width: none; } }
-.suggestions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+.suggestions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 6px; }
 .suggestions:empty { display: none; }
 .suggestion {
 	border: 1px solid var(--line);
@@ -121,15 +121,23 @@ select { width: 100%; min-height: 46px; padding: 9px 12px; border: 1px solid #cf
 .word-title { margin: 0; font-size: clamp(1.65rem, 5vw, 2.15rem); line-height: 1.15; overflow-wrap: anywhere; }
 .small-label { margin: 0 0 6px; color: var(--muted); font-size: .8rem; font-weight: 750; letter-spacing: .035em; text-transform: uppercase; }
 .ipa-block { margin-top: 24px; }
+.ipa-block .small-label { font-size: .68rem; letter-spacing: .015em; margin-bottom: 4px; color: #7a8497; }
 .ipa-text { font-family: "Noto Sans", "Segoe UI", sans-serif; font-size: clamp(1.7rem, 5vw, 2.2rem); letter-spacing: .015em; line-height: 1.25; overflow-wrap: anywhere; }
 .translation-block { margin-top: 24px; }
 .translation-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
 .translation-heading .small-label { margin-bottom: 8px; }
+.google-translate-button { display: block; min-height: 44px; margin: 16px 0 8px; padding: 9px 15px; background: #1a73e8; border-color: #1a73e8; }
+.google-translate-button:hover { background: #1765cc; border-color: #1765cc; }
+.google-translate-status { margin: 0 0 12px; color: var(--muted); font-size: .84rem; }
 .translation-help { color: var(--muted); font-size: .82rem; }
 .letter-grid { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; min-height: 66px; }
 .word-transcript-group { display: inline-flex; flex: 0 1 auto; flex-wrap: wrap; align-items: center; gap: 7px; max-width: 100%; min-width: 0; padding: 6px 8px; border: 1px solid; border-radius: 15px; margin: 2px 5px 2px 0; }
-.word-transcript-group-a { background: #f5f8ff; border-color: #dfe7fb; }
-.word-transcript-group-b { background: #f3faf8; border-color: #dcece7; }
+.word-transcript-group-a { background: #dce7ff; border-color: #6f91e8; box-shadow: inset 0 0 0 1px rgba(72, 111, 210, .12); }
+.word-transcript-group-b { background: #d8f1e5; border-color: #5da88a; box-shadow: inset 0 0 0 1px rgba(47, 132, 95, .12); }
+.word-transcript-group-a .letter-cell:not(.final-r) { background: #c5d7ff; border-color: #7898e9; }
+.word-transcript-group-b .letter-cell:not(.final-r) { background: #bfe8d4; border-color: #6bab8b; }
+.word-transcript-group-a .letter-cell:not(.final-r):hover, .word-transcript-group-a .letter-cell:not(.final-r)[aria-pressed="true"] { background: #a9c3ff; border-color: #3159c9; }
+.word-transcript-group-b .letter-cell:not(.final-r):hover, .word-transcript-group-b .letter-cell:not(.final-r)[aria-pressed="true"] { background: #9dddbd; border-color: #16745a; }
 .letter-cell {
 	min-width: 48px;
 	height: 58px;
@@ -239,6 +247,7 @@ footer p { margin: 5px 0; }
 			<div class="search-row">
 				<input id="wordInput" type="search" value="" autofocus placeholder="Въведи дума, фраза или изречение…" autocomplete="off" autocapitalize="none" spellcheck="false" aria-autocomplete="list" aria-controls="suggestions" aria-describedby="searchHelp">
 			</div>
+			<div class="suggestions" id="suggestions" role="listbox" aria-label="Предложения за думи"></div>
 			<p class="search-help" id="searchHelp">Започни да пишеш, за да видиш произношението и предложенията. Натисни всяка буква от изписването, за да научиш повече за звука.</p>
 		<div class="dictionary-controls">
 			<label for="accentSelect" class="accent-control" id="accentControl">Вариант на произношението
@@ -250,7 +259,6 @@ footer p { margin: 5px 0; }
 			<p class="dictionary-status" id="dictionaryStatus" role="status" aria-live="polite">Зареждам речника…</p>
 		</div>
 		</form>
-		<div class="suggestions" id="suggestions" role="listbox" aria-label="Предложения за думи"></div>
 	</section>
 
 	<section class="panel result-panel" id="resultPanel" aria-live="polite">
@@ -258,14 +266,6 @@ footer p { margin: 5px 0; }
 			<div>
 				<h2 class="word-title" id="resultWord"></h2>
 			</div>
-		</div>
-		<div class="ipa-block">
-			<p class="small-label">Фонетична транскрипция (IPA)</p>
-			<div class="ipa-text" id="ipaText">—</div>
-		</div>
-		<div class="variant-row hidden" id="variantRow">
-			<label for="pronunciationSelect">Вариант на произношението</label>
-			<select id="pronunciationSelect"></select>
 		</div>
 		<div class="translation-block">
 			<div class="translation-heading">
@@ -286,6 +286,16 @@ footer p { margin: 5px 0; }
 		<div class="not-found hidden" id="notFound">
 			<h2 id="notFoundHeading">Думата не е намерена</h2>
 			<p id="notFoundMessage">Провери изписването или избери някое от предложенията.</p>
+		</div>
+		<div class="variant-row hidden" id="variantRow">
+			<label for="pronunciationSelect">Вариант на произношението</label>
+			<select id="pronunciationSelect"></select>
+		</div>
+		<button class="primary-button google-translate-button" id="googleTranslateButton" type="button">Превод с Google Преводач</button>
+		<p class="google-translate-status hidden" id="googleTranslateStatus" role="status" aria-live="polite"></p>
+		<div class="ipa-block">
+			<p class="small-label">Фонетична транскрипция (IPA)</p>
+			<div class="ipa-text" id="ipaText">—</div>
 		</div>
 	</section>
 
@@ -331,7 +341,6 @@ footer p { margin: 5px 0; }
 			<input id="datasetFile" type="file" accept=".txt,text/plain" hidden>
 		</div>
 		<p class="form-note" style="margin-top:12px">Избери файл за съответния акцент. <a href="https://raw.githubusercontent.com/open-dict-data/ipa-dict/master/data/en_UK.txt" target="_blank" rel="noopener noreferrer">Британски речник (en_UK.txt)</a> · <a href="https://raw.githubusercontent.com/open-dict-data/ipa-dict/master/data/en_US.txt" target="_blank" rel="noopener noreferrer">Американски речник (en_US.txt)</a>. Ако автоматичното зареждане не успее, изтегли файла и го зареди тук.</p>
-		<p class="form-note">Персонални корекции: постави <code>override_en_UK.txt</code> или <code>override_en_US.txt</code> в основната папка на уебсайта (или до HTML файла). Форматът е дума, табулация, IPA варианти, табулация, незадължителна бележка, табулация, незадължителни настройки. Например <code>a&nbsp;&nbsp; /eɪ/ /ə/ &nbsp;&nbsp; бележка &nbsp;&nbsp; phrase=2;labels=име на буквата A|членът „a“</code>. Корекциите имат предимство пред големия речник. За локален HTML, отворен като <code>file://</code>, браузърът обикновено блокира автоматичното четене на съседни файлове; използвай локален HTTP сървър или уеб хостинг.</p>
 		<p class="form-note" id="datasetInfo" style="margin-top:10px">Подробностите за зареждането ще се покажат тук.</p>
 	</div>
 </details>
@@ -645,6 +654,8 @@ function tokenizeIPA(raw, strict = false) {
 }
 
 const wordInput = document.getElementById('wordInput');
+const googleTranslateButton = document.getElementById('googleTranslateButton');
+const googleTranslateStatus = document.getElementById('googleTranslateStatus');
 const lookupForm = document.getElementById('lookupForm');
 const suggestions = document.getElementById('suggestions');
 const resultWord = document.getElementById('resultWord');
@@ -660,6 +671,29 @@ const accentSelect = document.getElementById('accentSelect');
 const pronunciationSelect = document.getElementById('pronunciationSelect');
 const variantRow = document.getElementById('variantRow');
 const datasetInfo = document.getElementById('datasetInfo');
+
+function readQueryFromFragment() {
+	const fragment = window.location.hash.slice(1);
+	if (!fragment) return '';
+	try { return decodeURIComponent(fragment); }
+	catch (_) { return fragment; }
+}
+function updateFragmentFromInput() {
+	const fragment = wordInput.value ? `#${encodeURIComponent(wordInput.value)}` : '';
+	if (window.location.hash === fragment) return;
+	try {
+		window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${fragment}`);
+	} catch (_) {
+		// Some local file contexts restrict History API updates; the app still works normally.
+	}
+}
+window.addEventListener('hashchange', () => {
+	const query = readQueryFromFragment();
+	if (wordInput.value !== query) {
+		wordInput.value = query;
+		processSearchInput();
+	}
+});
 
 const WORD_PATTERN = /[A-Za-z]+(?:['’][A-Za-z]+)*(?:-[A-Za-z]+)*/g;
 function getVariantsForDisplay(word, entry, inPhrase = false) {
@@ -871,6 +905,7 @@ function chooseSuggestion(suggestedWord) {
 
 function processSearchInput() {
 	const raw = wordInput.value;
+	updateFragmentFromInput();
 	suggestions.replaceChildren();
 	wordInput.classList.remove('input-not-found');
 	if (!raw.trim()) {
@@ -917,6 +952,7 @@ function loadWord(word) {
 	if (!key) return;
 	activeWord = key;
 	wordInput.value = key;
+	updateFragmentFromInput();
 	wordInput.classList.remove('input-not-found');
 	suggestions.replaceChildren();
 	wordNote.classList.add('hidden');
@@ -1062,6 +1098,50 @@ lookupForm.addEventListener('submit', event => {
 	processSearchInput();
 });
 wordInput.addEventListener('input', processSearchInput);
+function copyTextToClipboard(text) {
+	if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+		return navigator.clipboard.writeText(text);
+	}
+	return new Promise((resolve, reject) => {
+		const temporaryInput = document.createElement('textarea');
+		temporaryInput.value = text;
+		temporaryInput.setAttribute('readonly', '');
+		temporaryInput.style.position = 'fixed';
+		temporaryInput.style.opacity = '0';
+		document.body.appendChild(temporaryInput);
+		temporaryInput.select();
+		let copied = false;
+		try { copied = document.execCommand('copy'); } catch (_) {}
+		temporaryInput.remove();
+		if (copied) resolve();
+		else reject(new Error('Clipboard access is unavailable.'));
+	});
+}
+googleTranslateButton.addEventListener('click', () => {
+	const text = wordInput.value.trim();
+	if (!text) {
+		wordInput.focus();
+		return;
+	}
+	const url = `https://translate.google.com/?sl=en&tl=bg&text=${encodeURIComponent(text)}&op=translate`;
+	googleTranslateStatus.classList.add('hidden');
+	googleTranslateStatus.textContent = '';
+	const isAndroid = /Android/i.test(navigator.userAgent);
+	if (isAndroid) {
+		// The Translate Android app may ignore text supplied in the URL. Copy it first so it can be pasted if needed.
+		const clipboardPromise = copyTextToClipboard(text);
+		window.open(url, '_blank', 'noopener,noreferrer');
+		clipboardPromise.then(() => {
+			googleTranslateStatus.textContent = 'Текстът е копиран. Ако приложението се отвори без него, постави текста в Google Преводач.';
+			googleTranslateStatus.classList.remove('hidden');
+		}).catch(() => {
+			googleTranslateStatus.textContent = 'Ако приложението се отвори без текста, върни се тук и копирай въведеното, след което го постави в Google Преводач.';
+			googleTranslateStatus.classList.remove('hidden');
+		});
+		return;
+	}
+	window.open(url, '_blank', 'noopener,noreferrer');
+});
 wordInput.addEventListener('keydown', event => {
 	if (event.key === 'ArrowDown') {
 		const first = suggestions.querySelector('button');
@@ -1286,6 +1366,7 @@ tableToggle.addEventListener('click', () => {
 });
 
 renderMappingTables();
+wordInput.value = readQueryFromFragment();
 showEmptyState();
 wordInput.focus();
 loadDictionary('en_UK');
