@@ -141,6 +141,8 @@ select { width: 100%; min-height: 46px; padding: 9px 12px; border: 1px solid #cf
 }
 .letter-cell:hover, .letter-cell[aria-pressed="true"] { border-color: var(--accent); background: #dfe8ff; box-shadow: inset 0 0 0 1px var(--accent); }
 .letter-cell.long-vowel { min-width: 64px; padding-inline: 10px; letter-spacing: -.04em; }
+.letter-cell.final-r { color: #604600; background: #ffe36e; border-color: #e5b800; }
+.letter-cell.final-r:hover, .letter-cell.final-r[aria-pressed="true"] { color: #493500; background: #ffd633; border-color: #bd8c00; box-shadow: inset 0 0 0 1px #bd8c00; }
 .detail-card {
 	display: grid;
 	grid-template-columns: auto minmax(0, 1fr);
@@ -326,6 +328,7 @@ footer p { margin: 5px 0; }
 			<input id="datasetFile" type="file" accept=".txt,text/plain" hidden>
 		</div>
 		<p class="form-note" style="margin-top:12px">Избери файл за съответния акцент. <a href="https://raw.githubusercontent.com/open-dict-data/ipa-dict/master/data/en_UK.txt" target="_blank" rel="noopener noreferrer">Британски речник (en_UK.txt)</a> · <a href="https://raw.githubusercontent.com/open-dict-data/ipa-dict/master/data/en_US.txt" target="_blank" rel="noopener noreferrer">Американски речник (en_US.txt)</a>. Ако автоматичното зареждане не успее, изтегли файла и го зареди тук.</p>
+		<p class="form-note">Персонални корекции: постави <code>override_en_UK.txt</code> или <code>override_en_US.txt</code> в основната папка на уебсайта (или до HTML файла). Форматът е дума, табулация, IPA варианти, табулация, незадължителна бележка, табулация, незадължителни настройки. Например <code>a&nbsp;&nbsp; /eɪ/ /ə/ &nbsp;&nbsp; бележка &nbsp;&nbsp; phrase=2;labels=име на буквата A|членът „a“</code>. Корекциите имат предимство пред големия речник. За локален HTML, отворен като <code>file://</code>, браузърът обикновено блокира автоматичното четене на съседни файлове; използвай локален HTTP сървър или уеб хостинг.</p>
 		<p class="form-note" id="datasetInfo" style="margin-top:10px">Подробностите за зареждането ще се покажат тук.</p>
 	</div>
 </details>
@@ -436,6 +439,7 @@ const ACCENT_LABELS = {
 
 let customEntries = loadCustomEntries();
 let dictionaryEntries = new Map();
+let overrideEntries = new Map();
 let dictionaryWords = [];
 let activeAccent = 'en_UK';
 let activeWord = '';
@@ -526,8 +530,58 @@ function parseDataset(rawText) {
 	if (parsed.size < 1000) throw new Error('The selected file does not look like a valid ipa-dict dataset.');
 	return parsed;
 }
+function parseOverrideFile(rawText) {
+	const parsed = new Map();
+	for (const line of rawText.split(/\r?\n/)) {
+		const trimmed = line.trim();
+		if (!trimmed || trimmed.startsWith('#')) continue;
+		const fields = line.split('\t');
+		if (fields.length < 2) continue;
+		const word = normalizeWord(fields[0]);
+		const ipaField = fields[1].trim();
+		if (!/^[a-z][a-z'’-]*$/i.test(word) || !ipaField) continue;
+		const variants = [...ipaField.matchAll(/\/([^/]+)\//g)].map(m => m[1].trim()).filter(Boolean);
+		const values = variants.length ? variants : [ipaField.replace(/^\/+|\/+$/g, '')];
+		const metadata = Object.fromEntries((fields[3] || '').split(';').map(item => item.trim()).filter(Boolean).map(item => {
+			const splitAt = item.indexOf('=');
+			return splitAt < 0 ? [item, ''] : [item.slice(0, splitAt).trim(), item.slice(splitAt + 1).trim()];
+		}));
+		const phraseIndex = Number(metadata.phrase);
+		const variantLabels = metadata.labels ? metadata.labels.split('|').map(label => label.trim()) : [];
+		parsed.set(word, {
+			variants: values,
+			note: (fields[2] || '').trim(),
+			phraseVariantIndex: Number.isInteger(phraseIndex) && phraseIndex >= 1 && phraseIndex <= values.length ? phraseIndex - 1 : null,
+			variantLabels
+		});
+	}
+	return parsed;
+}
+async function loadOverrides(accent) {
+	overrideEntries = new Map();
+	const filename = accent === 'en_UK' ? 'override_en_UK.txt' : 'override_en_US.txt';
+	const urls = [];
+	// First check the web server's root path (for example, https://example.com/override_en_UK.txt).
+	try { urls.push(new URL('/' + filename, location.href).href); } catch (_) {}
+	// Then fall back to the directory containing the HTML file.
+	try {
+		const adjacentUrl = new URL(filename, document.baseURI).href;
+		if (!urls.includes(adjacentUrl)) urls.push(adjacentUrl);
+	} catch (_) {}
+	for (const url of urls) {
+		try {
+			const response = await fetch(url, { cache: 'no-cache' });
+			if (!response.ok) continue;
+			const raw = await response.text();
+			const parsed = parseOverrideFile(raw);
+			if (parsed.size) { overrideEntries = parsed; break; }
+		} catch (_) {
+			// file:// pages commonly cannot fetch adjacent text files; the app remains usable without overrides.
+		}
+	}
+}
 function refreshWordIndex() {
-	dictionaryWords = [...new Set([...dictionaryEntries.keys(), ...Object.keys(customEntries), 'a', ...(activeAccent === 'en_UK' ? ['pan', 'here'] : [])])].sort();
+	dictionaryWords = [...new Set([...dictionaryEntries.keys(), ...overrideEntries.keys(), ...Object.keys(customEntries)])].sort();
 }
 function findPrefixStart(words, prefix) {
 	let lo = 0;
@@ -540,12 +594,9 @@ function findPrefixStart(words, prefix) {
 	return lo;
 }
 function currentEntry(word) {
+	const override = overrideEntries.get(normalizeWord(word));
+	if (override) return { ...override, source: 'override', note: override.note || '' };
 	if (customEntries[word]) return { variants: [customEntries[word].ipa], source: 'personal' };
-	// Stable UK entries explicitly requested for this app.
-	if (activeAccent === 'en_UK' && word === 'here') return { variants: ['hɪər'], source: 'dictionary' };
-	if (activeAccent === 'en_UK' && word === 'pan') return { variants: ['pæn'], source: 'special-pan' };
-	// The one-letter entry is often omitted from downloadable lists. Include the weak article and the letter name.
-	if (word === 'a') return { variants: ['eɪ', 'ə'], source: 'special-a' };
 	const variants = dictionaryEntries.get(word);
 	if (variants) return { variants, source: 'dictionary' };
 	return null;
@@ -609,19 +660,18 @@ const datasetInfo = document.getElementById('datasetInfo');
 
 const WORD_PATTERN = /[A-Za-z]+(?:['’][A-Za-z]+)*(?:-[A-Za-z]+)*/g;
 function getVariantsForDisplay(word, entry, inPhrase = false) {
-	const key = normalizeWord(word);
-	if (activeAccent === 'en_UK' && key === 'here' && entry.source !== 'personal') return ['hɪər'];
-	if (inPhrase && key === 'a' && entry.source === 'special-a') return ['ə'];
+	if (inPhrase && entry.source === 'override' && Number.isInteger(entry.phraseVariantIndex)) {
+		return [entry.variants[entry.phraseVariantIndex]];
+	}
 	return entry.variants.slice();
 }
 function finalRNote(word, ipa) {
 	if (activeAccent !== 'en_UK' || !/(?:r|re)$/u.test(normalizeWord(word))) return '';
-	if (normalizeWord(word) === 'here') {
-		return 'В този пример транскрипцията е показана като /hɪər/. Някои британски речници записват /hɪə/, защото r обикновено не се произнася в края на думата без следващ гласен звук.';
-	}
+	const override = overrideEntries.get(normalizeWord(word));
+	if (override && override.note) return override.note;
 	return `В този британски вариант транскрипцията е показана като /${ipa}/. В много британски акценти буквата r в края на думата обикновено не се произнася, ако след нея няма гласен звук. Ако следващата дума започва с гласен звук, /r/ може да се свърже с нея.`;
 }
-function appendLetterButtons(ipa, container) {
+function appendLetterButtons(ipa, container, appendFinalR = false) {
 	const result = tokenizeIPA(ipa, false);
 	if (result.error) return 0;
 	let count = 0;
@@ -636,6 +686,23 @@ function appendLetterButtons(ipa, container) {
 		button.setAttribute('aria-pressed', 'false');
 		button.setAttribute('aria-label', `${displayed}; звук /${unit.ipa}/. Натисни за обяснение.`);
 		button.addEventListener('click', () => showPhoneDetail(unit, displayed, button));
+		container.append(button);
+		count++;
+	}
+	if (appendFinalR) {
+		const button = document.createElement('button');
+		button.type = 'button';
+		button.className = 'letter-cell final-r';
+		button.textContent = 'р';
+		button.setAttribute('aria-pressed', 'false');
+		button.setAttribute('aria-label', 'Допълнително р: буквата r обикновено не се произнася в края на британска дума без следващ гласен звук.');
+		button.addEventListener('click', () => {
+			letterGrid.querySelectorAll('.letter-cell').forEach(cell => cell.setAttribute('aria-pressed', String(cell === button)));
+			detailSymbol.textContent = 'р';
+			detailTitle.textContent = 'Допълнително „р“';
+			detailDescription.textContent = 'Показва написаната буква r, която в много британски акценти не се произнася в края на думата без следващ гласен звук.';
+			detailExample.textContent = 'Свързващо r може да се чуе, ако следващата дума започва с гласен звук.';
+		});
 		container.append(button);
 		count++;
 	}
@@ -656,7 +723,7 @@ function showPhoneDetail(unit, character, activeButton) {
 	detailDescription.textContent = info.explanation;
 	detailExample.textContent = info.example ? `Пример: ${info.example}` : '';
 }
-function drawPronunciation(ipa) {
+function drawPronunciation(ipa, word = activeWord) {
 	const result = tokenizeIPA(ipa, false);
 	letterGrid.replaceChildren();
 	if (result.error) {
@@ -666,7 +733,8 @@ function drawPronunciation(ipa) {
 		detailExample.textContent = '';
 		return;
 	}
-	appendLetterButtons(ipa, letterGrid);
+	const needsFinalRCell = activeAccent === 'en_UK' && /(?:r|re)$/u.test(normalizeWord(word)) && Boolean(finalRNote(word, ipa));
+	appendLetterButtons(ipa, letterGrid, needsFinalRCell);
 	const firstButton = letterGrid.querySelector('button');
 	if (firstButton) {
 		for (const unit of result.units) {
@@ -718,7 +786,8 @@ function renderTextQuery(rawText, pendingWord = '') {
 			const ipaSpan = document.createElement('span');
 			ipaSpan.textContent = `/${ipa}/`;
 			ipaText.append(ipaSpan);
-			letterCount += appendLetterButtons(ipa, letterGrid);
+			const needsFinalRCell = activeAccent === 'en_UK' && /(?:r|re)$/u.test(word) && Boolean(finalRNote(word, ipa));
+			letterCount += appendLetterButtons(ipa, letterGrid, needsFinalRCell);
 			const note = finalRNote(word, ipa);
 			if (note && !notes.includes(note)) notes.push(note);
 		} else if (pendingWord && word === pendingWord) {
@@ -827,7 +896,7 @@ function updateActivePronunciation() {
 	if (!activeVariants.length) return;
 	const ipa = activeVariants[activeVariantIndex] || activeVariants[0];
 	ipaText.textContent = `/${ipa}/`;
-	drawPronunciation(ipa);
+	drawPronunciation(ipa, activeWord);
 }
 function loadWord(word) {
 	const key = normalizeWord(word);
@@ -870,8 +939,8 @@ function loadWord(word) {
 	}
 	resultWord.textContent = key;
 	activeVariants = getVariantsForDisplay(key, entry, false);
-	activeVariantLabels = entry.source === 'special-a'
-		? ['/eɪ/ — името на буквата A', '/ə/ — членът „a“']
+	activeVariantLabels = entry.source === 'override' && entry.variantLabels.length
+		? entry.variantLabels.map((label, index) => label || `/${entry.variants[index]}/`)
 		: [];
 	activeVariantIndex = 0;
 	if (activeVariants.length > 1) {
@@ -888,8 +957,8 @@ function loadWord(word) {
 	if (entry.source === 'personal') {
 		wordNote.textContent = 'Тази дума е добавена в личния ти речник.';
 		wordNote.classList.remove('hidden');
-	} else if (entry.source === 'special-a') {
-		wordNote.textContent = 'Името на буквата A се произнася /eɪ/. Като неопределителен член „a“ обикновено се произнася /ə/; избери желания вариант от списъка.';
+	} else if (entry.source === 'override' && entry.note) {
+		wordNote.textContent = entry.note;
 		wordNote.classList.remove('hidden');
 	} else {
 		const note = finalRNote(key, activeVariants[activeVariantIndex] || activeVariants[0]);
@@ -1028,6 +1097,7 @@ async function loadDictionary(accent, force = false) {
 				if (serial !== requestSerial) return;
 				if (cached) {
 					dictionaryEntries = parseDataset(cached);
+					await loadOverrides(accent);
 					finishDictionaryLoad(accent, dictionaryEntries.size, 'зареден от локалния кеш; наличен офлайн');
 					return;
 				}
@@ -1056,6 +1126,7 @@ async function loadDictionary(accent, force = false) {
 		if (!rawText) throw lastError || new Error('All dictionary download sources failed.');
 		if (serial !== requestSerial) return;
 		dictionaryEntries = parseDataset(rawText);
+		await loadOverrides(accent);
 		let cacheMessage = 'локалното запазване не е достъпно; речникът ще остане наличен само докато страницата е отворена';
 		try {
 			await writeCachedDataset(accent, rawText);
@@ -1065,6 +1136,7 @@ async function loadDictionary(accent, force = false) {
 	} catch (error) {
 		if (serial !== requestSerial) return;
 		dictionaryEntries = new Map();
+		await loadOverrides(accent);
 		refreshWordIndex();
 		dataReady = true;
 		setDictionaryStatus('Речникът не можа да се зареди. Отвори „Технически подробности“ за други начини.', 'error');
@@ -1097,6 +1169,7 @@ document.getElementById('datasetFile').addEventListener('change', async event =>
 	try {
 		const rawText = await file.text();
 		dictionaryEntries = parseDataset(rawText);
+		await loadOverrides(activeAccent);
 		dataReady = true;
 		refreshWordIndex();
 		try {

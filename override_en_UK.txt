@@ -1,0 +1,5 @@
+# Format: word<TAB>IPA variant(s)<TAB>optional Bulgarian note<TAB>optional metadata
+# Metadata: phrase=2 selects the second IPA variant inside phrases; labels are separated by |
+a	/eɪ/ /ə/	Името на буквата A се произнася /eɪ/. Като неопределителен член „a“ обикновено се произнася /ə/; избери желания вариант от списъка.	phrase=2;labels=име на буквата A|членът „a“
+pan	/pæn/
+here	/hɪər/	В този пример транскрипцията е показана като /hɪər/. Някои британски речници записват /hɪə/, защото r обикновено не се произнася в края на думата без следващ гласен звук.
