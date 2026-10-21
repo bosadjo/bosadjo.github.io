@@ -702,17 +702,79 @@ function getVariantsForDisplay(word, entry, inPhrase = false) {
 	}
 	return entry.variants.slice();
 }
+function silentRCase(word, ipa) {
+	if (activeAccent !== 'en_UK') return '';
+	const normalized = normalizeWord(word).replace(/['’]s$/u, '');
+	const candidates = [{ stem: normalized, type: 'word-final' }];
+	if (normalized.endsWith('s')) candidates.push({ stem: normalized.slice(0, -1), type: 'consonant-suffix' });
+	if (normalized.endsWith('ed')) {
+		candidates.push({ stem: normalized.slice(0, -2), type: 'consonant-suffix' });
+		candidates.push({ stem: normalized.slice(0, -1), type: 'consonant-suffix' });
+	}
+	const clean = cleanIPA(ipa).replace(/[()]/gu, '').replace(/[ˈˌːˑ]/gu, '');
+	for (const candidate of candidates) {
+		if (candidate.stem.length < 3 || !/(?:r|re)$/u.test(candidate.stem)) continue;
+		let tail = clean;
+		if (candidate.type === 'consonant-suffix') {
+			if (normalized.endsWith('ed')) tail = tail.replace(/[dt]$/u, '');
+			else tail = tail.replace(/[sz]$/u, '');
+		}
+		// Do not add a second indicator when this transcription already represents the final r.
+		if (/(?:r|ɹ|ɻ|ɾ|ɚ|ɝ|ɹ̩|ɹ˞|r˞)$/u.test(tail)) continue;
+		return candidate.type;
+	}
+	return '';
+}
 function finalRNote(word, ipa) {
-	if (activeAccent !== 'en_UK' || !/(?:r|re)$/u.test(normalizeWord(word))) return '';
+	const rCase = silentRCase(word, ipa);
+	if (!rCase) return '';
 	const override = overrideEntries.get(normalizeWord(word));
 	if (override && override.note) return override.note;
+	if (rCase === 'consonant-suffix') {
+		return `В този британски вариант транскрипцията е показана като /${ipa}/. Буквата r в основата на „${word}“ обикновено не се произнася пред съгласното окончание; жълтото „р“ напомня за правописа, а не за допълнителен звук.`;
+	}
 	return `В този британски вариант транскрипцията е показана като /${ipa}/. В много британски акценти буквата r в края на думата обикновено не се произнася, ако след нея няма гласен звук. Ако следващата дума започва с гласен звук, /r/ може да се свърже с нея.`;
 }
-function appendLetterButtons(ipa, container, appendFinalR = false) {
+function createFinalRButton() {
+	const button = document.createElement('button');
+	button.type = 'button';
+	button.className = 'letter-cell final-r';
+	button.textContent = 'р';
+	button.setAttribute('aria-pressed', 'false');
+	button.setAttribute('aria-label', 'Допълнително р: напомня за написаната буква r, която не е представена отделно в тази британска IPA транскрипция.');
+	button.addEventListener('click', () => {
+		letterGrid.querySelectorAll('.letter-cell').forEach(cell => cell.setAttribute('aria-pressed', String(cell === button)));
+		detailSymbol.textContent = 'р';
+		detailTitle.textContent = 'Допълнително „р“';
+		detailDescription.textContent = 'Показва написаната буква r, която в много британски акценти не се произнася без свързване с гласен звук. При окончания като множественото число жълтото „р“ се поставя пред окончанието.';
+		detailExample.textContent = 'Например: juniors → „джуунйърз“; маркерът е преди крайното „з“.';
+	});
+	return button;
+}
+function finalRSuffixUnitCount(word, ipa) {
+	const normalized = normalizeWord(word);
+	if (normalized.endsWith('s')) return 1;
+	if (normalized.endsWith('ed')) {
+		const clean = cleanIPA(ipa).replace(/[ˈˌːˑ]/gu, '');
+		// When -ed adds a syllable /ɪd/, put the spelling marker before that whole suffix.
+		// Don't treat a stem diphthong ending in /ə/ (e.g. cared /keəd/) as part of -ed.
+		if (/ɪd$/u.test(clean)) return 2;
+		return 1;
+	}
+	return 1;
+}
+function appendLetterButtons(ipa, container, appendFinalR = false, finalRBeforeSuffixUnits = 0) {
 	const result = tokenizeIPA(ipa, false);
 	if (result.error) return 0;
 	let count = 0;
-	for (const unit of result.units) {
+	let finalRAdded = false;
+	for (let index = 0; index < result.units.length; index++) {
+		if (appendFinalR && finalRBeforeSuffixUnits > 0 && index === Math.max(0, result.units.length - finalRBeforeSuffixUnits)) {
+			container.append(createFinalRButton());
+			count++;
+			finalRAdded = true;
+		}
+		const unit = result.units[index];
 		const info = infoFor(unit.key);
 		if (unit.key === 'primary' || unit.key === 'secondary' || (info && !info.bg)) continue;
 		const displayed = info ? info.bg : '?';
@@ -726,21 +788,8 @@ function appendLetterButtons(ipa, container, appendFinalR = false) {
 		container.append(button);
 		count++;
 	}
-	if (appendFinalR) {
-		const button = document.createElement('button');
-		button.type = 'button';
-		button.className = 'letter-cell final-r';
-		button.textContent = 'р';
-		button.setAttribute('aria-pressed', 'false');
-		button.setAttribute('aria-label', 'Допълнително р: буквата r обикновено не се произнася в края на британска дума без следващ гласен звук.');
-		button.addEventListener('click', () => {
-			letterGrid.querySelectorAll('.letter-cell').forEach(cell => cell.setAttribute('aria-pressed', String(cell === button)));
-			detailSymbol.textContent = 'р';
-			detailTitle.textContent = 'Допълнително „р“';
-			detailDescription.textContent = 'Показва написаната буква r, която в много британски акценти не се произнася в края на думата без следващ гласен звук.';
-			detailExample.textContent = 'Свързващо r може да се чуе, ако следващата дума започва с гласен звук.';
-		});
-		container.append(button);
+	if (appendFinalR && !finalRAdded) {
+		container.append(createFinalRButton());
 		count++;
 	}
 	return count;
@@ -770,8 +819,10 @@ function drawPronunciation(ipa, word = activeWord) {
 		detailExample.textContent = '';
 		return;
 	}
-	const needsFinalRCell = activeAccent === 'en_UK' && /(?:r|re)$/u.test(normalizeWord(word)) && Boolean(finalRNote(word, ipa));
-	appendLetterButtons(ipa, letterGrid, needsFinalRCell);
+	const rCase = silentRCase(word, ipa);
+	const needsFinalRCell = Boolean(rCase);
+	const rSuffixUnits = rCase === 'consonant-suffix' ? finalRSuffixUnitCount(word, ipa) : 0;
+	appendLetterButtons(ipa, letterGrid, needsFinalRCell, rSuffixUnits);
 	const firstButton = letterGrid.querySelector('button');
 	if (firstButton) {
 		for (const unit of result.units) {
@@ -833,8 +884,10 @@ function renderTextQuery(rawText, pendingWord = '') {
 			const ipaSpan = document.createElement('span');
 			ipaSpan.textContent = `/${ipa}/`;
 			ipaText.append(ipaSpan);
-			const needsFinalRCell = activeAccent === 'en_UK' && /(?:r|re)$/u.test(word) && Boolean(finalRNote(word, ipa));
-			letterCount += appendLetterButtons(ipa, wordContainer, needsFinalRCell);
+			const rCase = silentRCase(word, ipa);
+			const needsFinalRCell = Boolean(rCase);
+			const rSuffixUnits = rCase === 'consonant-suffix' ? finalRSuffixUnitCount(word, ipa) : 0;
+			letterCount += appendLetterButtons(ipa, wordContainer, needsFinalRCell, rSuffixUnits);
 			const note = finalRNote(word, ipa);
 			if (note && !notes.includes(note)) notes.push(note);
 		} else if (pendingWord && word === pendingWord) {
@@ -1169,7 +1222,7 @@ suggestions.addEventListener('keydown', event => {
 pronunciationSelect.addEventListener('change', () => {
 	activeVariantIndex = Number(pronunciationSelect.value) || 0;
 	updateActivePronunciation();
-	if (activeAccent === 'en_UK' && /(?:r|re)$/u.test(normalizeWord(activeWord)) && !customEntries[activeWord]) {
+	if (activeAccent === 'en_UK' && !customEntries[activeWord]) {
 		const note = finalRNote(activeWord, activeVariants[activeVariantIndex] || activeVariants[0]);
 		if (note) { wordNote.textContent = note; wordNote.classList.remove('hidden'); }
 	}
