@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7fb">
-<title>Как се произнася английската дума — транскрипция с български букви</title>
+<title>Как се произнася английската дума с транскрипция на български</title>
 <style>
 :root {
 	color-scheme: light;
@@ -40,6 +40,7 @@ button:focus-visible, input:focus-visible, summary:focus-visible {
 }
 .wrap { width: min(920px, calc(100% - 32px)); margin: 0 auto; }
 header { padding: 32px 0 22px; }
+.development-warning { margin: 0 0 14px; color: #d00000; font-size: .84rem; font-weight: 750; }
 .kicker {
 	display: inline-flex;
 	align-items: center;
@@ -91,8 +92,12 @@ input[type="search"], input[type="text"] {
 .dictionary-controls label { display: grid; gap: 6px; font-size: .88rem; font-weight: 700; }
 select { width: 100%; min-height: 46px; padding: 9px 12px; border: 1px solid #cfd7e6; border-radius: 12px; color: var(--text); background: #fff; font: inherit; }
 .dictionary-status { min-height: 2.6em; margin: 0; padding: 10px 12px; color: var(--muted); background: var(--surface-soft); border-radius: 10px; font-size: .85rem; }
+.dictionary-status.loading { color: #694b00; background: #fff0a3; border: 1px solid #e3bd33; font-weight: 850; box-shadow: 0 0 0 2px rgba(255, 214, 51, .16); }
 .dictionary-status.error { color: #9c3232; background: #fff2f2; }
 .dictionary-status.success { color: var(--good); background: #eef9f4; }
+.accent-control { padding: 9px 10px 10px; border: 1px solid #c9e4d0; border-radius: 13px; background: #f1faf3; }
+.accent-control select { border-color: #add2b8; background: #f8fff9; }
+.accent-control option:checked { background: #dff4e5; color: #205d35; }
 .dictionary-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
 .dictionary-actions .quiet-button, .dictionary-actions .secondary-button { min-height: 42px; padding: 8px 12px; }
 .dictionary-actions a { color: var(--accent-dark); font-size: .86rem; }
@@ -161,9 +166,15 @@ select { width: 100%; min-height: 46px; padding: 9px 12px; border: 1px solid #cf
 .detail-description { margin: 0; color: #47546b; font-size: .94rem; }
 .detail-example { margin: 7px 0 0; color: var(--muted); font-size: .84rem; }
 .word-note { margin: 16px 0 0; padding: 12px 14px; border-left: 3px solid #d6a448; background: #fff9ed; color: #654b1c; border-radius: 0 10px 10px 0; font-size: .88rem; }
-.not-found { padding: 20px 0 4px; }
-.not-found h2 { margin: 0 0 7px; font-size: 1.25rem; }
-.not-found p { color: var(--muted); margin: 0; }
+.not-found { padding: 13px 14px; margin-top: 16px; border: 1px solid #ff4b4b; border-radius: 12px; background: #fff0f0; }
+.not-found h2 { margin: 0 0 7px; color: #e00000; font-size: 1.1rem; font-weight: 850; }
+.not-found p { color: #9c0000; margin: 0; }
+.input-not-found { border-color: #ff1c1c !important; background: #fff0f0 !important; box-shadow: 0 0 0 2px rgba(255, 28, 28, .12); }
+.missing-word { display: inline; padding: 1px 3px; color: #e00000; background: #fff0f0; border-radius: 4px; font-weight: 850; }
+.pending-transcription { color: #8a6500; font-weight: 750; }
+.phonetic-separator { white-space: pre-wrap; }
+.missing-translation { display: inline-block; padding: 7px 9px; border: 1px solid #ff4b4b; border-radius: 10px; color: #d00000; background: #fff0f0; font-size: .9rem; font-weight: 800; }
+.pending-translation { display: inline-block; padding: 7px 9px; border: 1px solid #e3bd33; border-radius: 10px; color: #795b00; background: #fff7cb; font-size: .88rem; font-weight: 750; }
 .utility-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-top: 16px; }
 details.panel { padding: 0; box-shadow: none; }
 details.panel > summary { padding: 17px 19px; cursor: pointer; list-style-position: inside; font-weight: 750; }
@@ -212,19 +223,20 @@ footer p { margin: 5px 0; }
 </head>
 <body>
 <header class="wrap">
-	<h1>Как се произнася английската дума?</h1>
-	<p class="lead">Английско произношение, показано с български букви — с обяснение за всеки звук.</p>
+	<p class="development-warning">В процес на разработка, може да има грешки и неточности!</p>
+	<h1>Как се произнася английската дума с транскрипция на български</h1>
+	<p class="lead">Въвеждай отделни думи, фрази и цели изречения. Произношението се показва с български букви, а всеки звук може да бъде натиснат за обяснение.</p>
 </header>
 <main class="wrap">
 	<section class="panel search-panel" aria-label="Търсене в речника">
 		<form id="lookupForm">
-			<label class="field-label" for="wordInput">Английска дума</label>
+			<label class="field-label" for="wordInput">Английска дума, фраза или изречение</label>
 			<div class="search-row">
-				<input id="wordInput" type="search" value="" autofocus placeholder="Въведи английска дума…" autocomplete="off" autocapitalize="none" spellcheck="false" aria-autocomplete="list" aria-controls="suggestions" aria-describedby="searchHelp">
+				<input id="wordInput" type="search" value="" autofocus placeholder="Въведи дума, фраза или изречение…" autocomplete="off" autocapitalize="none" spellcheck="false" aria-autocomplete="list" aria-controls="suggestions" aria-describedby="searchHelp">
 			</div>
 			<p class="search-help" id="searchHelp">Започни да пишеш, за да видиш произношението и предложенията. Натисни всяка буква от изписването, за да научиш повече за звука.</p>
 		<div class="dictionary-controls">
-			<label for="accentSelect">Вариант на произношението
+			<label for="accentSelect" class="accent-control" id="accentControl">Вариант на произношението
 				<select id="accentSelect">
 					<option value="en_UK" selected>Британски английски</option>
 					<option value="en_US">Американски английски</option>
@@ -244,7 +256,7 @@ footer p { margin: 5px 0; }
 		</div>
 		<div class="ipa-block">
 			<p class="small-label">Фонетична транскрипция (IPA)</p>
-			<div class="ipa-text" id="ipaText">/hɪər/</div>
+			<div class="ipa-text" id="ipaText">—</div>
 		</div>
 		<div class="variant-row hidden" id="variantRow">
 			<label for="pronunciationSelect">Вариант на произношението</label>
@@ -258,11 +270,11 @@ footer p { margin: 5px 0; }
 			<div class="letter-grid" id="letterGrid" role="group" aria-label="Изписване на произношението с български букви"></div>
 		</div>
 		<div class="detail-card" id="detailCard" aria-live="polite">
-			<div class="detail-symbol" id="detailSymbol">и</div>
+			<div class="detail-symbol" id="detailSymbol">—</div>
 			<div>
-				<h3 class="detail-title" id="detailTitle">„и“ съответства приблизително на /ɪ/</h3>
-				<p class="detail-description" id="detailDescription">Кратко, отпуснато „и“; малко по-отворено от българското „и“.</p>
-				<p class="detail-example" id="detailExample">Пример: sit</p>
+				<h3 class="detail-title" id="detailTitle">Започни да пишеш</h3>
+				<p class="detail-description" id="detailDescription">Произношението и предложенията ще се появяват автоматично.</p>
+				<p class="detail-example" id="detailExample"></p>
 			</div>
 		</div>
 		<p class="word-note hidden" id="wordNote"></p>
@@ -461,7 +473,8 @@ function normalizeWord(word) { return word.trim().toLocaleLowerCase('en-US'); }
 function setDictionaryStatus(message, className = '') {
 	const status = document.getElementById('dictionaryStatus');
 	status.textContent = message;
-	status.className = `dictionary-status${className ? ` ${className}` : ''}`;
+	const isLoading = /зареждам|подготвям|изтеглям|проверявам|избран речник/i.test(message);
+	status.className = `dictionary-status${className ? ` ${className}` : ''}${isLoading ? ' loading' : ''}`;
 }
 function openCacheDatabase() {
 	if (!('indexedDB' in window)) return Promise.reject(new Error('IndexedDB is unavailable in this browser.'));
@@ -514,7 +527,7 @@ function parseDataset(rawText) {
 	return parsed;
 }
 function refreshWordIndex() {
-	dictionaryWords = [...new Set([...dictionaryEntries.keys(), ...Object.keys(customEntries), 'a'])].sort();
+	dictionaryWords = [...new Set([...dictionaryEntries.keys(), ...Object.keys(customEntries), 'a', ...(activeAccent === 'en_UK' ? ['pan', 'here'] : [])])].sort();
 }
 function findPrefixStart(words, prefix) {
 	let lo = 0;
@@ -528,10 +541,14 @@ function findPrefixStart(words, prefix) {
 }
 function currentEntry(word) {
 	if (customEntries[word]) return { variants: [customEntries[word].ipa], source: 'personal' };
+	// Stable UK entries explicitly requested for this app.
+	if (activeAccent === 'en_UK' && word === 'here') return { variants: ['hɪər'], source: 'dictionary' };
+	if (activeAccent === 'en_UK' && word === 'pan') return { variants: ['pæn'], source: 'special-pan' };
 	// The one-letter entry is often omitted from downloadable lists. Include the weak article and the letter name.
 	if (word === 'a') return { variants: ['eɪ', 'ə'], source: 'special-a' };
 	const variants = dictionaryEntries.get(word);
-	return variants ? { variants, source: 'dictionary' } : null;
+	if (variants) return { variants, source: 'dictionary' };
+	return null;
 }
 function cleanIPA(raw) {
 	return String(raw || '').trim().replace(/[\/\[\]]/g, '').replace(/͡/gu, '').replace(/\s+/g, '');
@@ -590,6 +607,41 @@ const pronunciationSelect = document.getElementById('pronunciationSelect');
 const variantRow = document.getElementById('variantRow');
 const datasetInfo = document.getElementById('datasetInfo');
 
+const WORD_PATTERN = /[A-Za-z]+(?:['’][A-Za-z]+)*(?:-[A-Za-z]+)*/g;
+function getVariantsForDisplay(word, entry, inPhrase = false) {
+	const key = normalizeWord(word);
+	if (activeAccent === 'en_UK' && key === 'here' && entry.source !== 'personal') return ['hɪər'];
+	if (inPhrase && key === 'a' && entry.source === 'special-a') return ['ə'];
+	return entry.variants.slice();
+}
+function finalRNote(word, ipa) {
+	if (activeAccent !== 'en_UK' || !/(?:r|re)$/u.test(normalizeWord(word))) return '';
+	if (normalizeWord(word) === 'here') {
+		return 'В този пример транскрипцията е показана като /hɪər/. Някои британски речници записват /hɪə/, защото r обикновено не се произнася в края на думата без следващ гласен звук.';
+	}
+	return `В този британски вариант транскрипцията е показана като /${ipa}/. В много британски акценти буквата r в края на думата обикновено не се произнася, ако след нея няма гласен звук. Ако следващата дума започва с гласен звук, /r/ може да се свърже с нея.`;
+}
+function appendLetterButtons(ipa, container) {
+	const result = tokenizeIPA(ipa, false);
+	if (result.error) return 0;
+	let count = 0;
+	for (const unit of result.units) {
+		const info = infoFor(unit.key);
+		if (unit.key === 'primary' || unit.key === 'secondary' || (info && !info.bg)) continue;
+		const displayed = info ? info.bg : '?';
+		const button = document.createElement('button');
+		button.type = 'button';
+		button.className = `letter-cell${Array.from(displayed).length > 1 ? ' long-vowel' : ''}`;
+		button.textContent = displayed;
+		button.setAttribute('aria-pressed', 'false');
+		button.setAttribute('aria-label', `${displayed}; звук /${unit.ipa}/. Натисни за обяснение.`);
+		button.addEventListener('click', () => showPhoneDetail(unit, displayed, button));
+		container.append(button);
+		count++;
+	}
+	return count;
+}
+
 function showPhoneDetail(unit, character, activeButton) {
 	letterGrid.querySelectorAll('.letter-cell').forEach(button => button.setAttribute('aria-pressed', String(button === activeButton)));
 	const info = infoFor(unit.key);
@@ -614,37 +666,162 @@ function drawPronunciation(ipa) {
 		detailExample.textContent = '';
 		return;
 	}
-	for (const unit of result.units) {
-		const info = infoFor(unit.key);
-		if (unit.key === 'primary' || unit.key === 'secondary' || (info && !info.bg)) continue;
-		const displayed = info ? info.bg : '?';
-		// One IPA unit gets one button, even when its Bulgarian approximation has two letters (дж, нг, ии, ей, иъ, etc.).
-		const button = document.createElement('button');
-		button.type = 'button';
-		button.className = `letter-cell${Array.from(displayed).length > 1 ? ' long-vowel' : ''}`;
-		button.textContent = displayed;
-		button.setAttribute('aria-pressed', 'false');
-		button.setAttribute('aria-label', `${displayed}; звук /${unit.ipa}/. Натисни за обяснение.`);
-		button.addEventListener('click', () => showPhoneDetail(unit, displayed, button));
-		letterGrid.append(button);
-	}
+	appendLetterButtons(ipa, letterGrid);
 	const firstButton = letterGrid.querySelector('button');
 	if (firstButton) {
-		const parsed = tokenizeIPA(ipa, false).units;
-		let selectedUnit = null;
-		for (const unit of parsed) {
+		for (const unit of result.units) {
 			const info = infoFor(unit.key);
 			if (unit.key === 'primary' || unit.key === 'secondary' || (info && !info.bg)) continue;
-			selectedUnit = unit;
+			showPhoneDetail(unit, firstButton.textContent, firstButton);
 			break;
 		}
-		if (selectedUnit) showPhoneDetail(selectedUnit, firstButton.textContent, firstButton);
 	} else {
 		detailSymbol.textContent = '—';
 		detailTitle.textContent = 'Няма български букви за показване';
 		detailDescription.textContent = 'Транскрипцията може да съдържа само знаци за ударение или дължина.';
 		detailExample.textContent = '';
 	}
+}
+
+function renderTextQuery(rawText, pendingWord = '') {
+	const matches = [...rawText.matchAll(WORD_PATTERN)];
+	activeWord = normalizeWord(rawText);
+	activeVariants = [];
+	activeVariantLabels = [];
+	activeVariantIndex = 0;
+	variantRow.classList.add('hidden');
+	wordNote.classList.add('hidden');
+	notFound.classList.add('hidden');
+	resultWord.textContent = rawText;
+	ipaText.replaceChildren();
+	letterGrid.replaceChildren();
+	const notes = [];
+	let cursor = 0;
+	let missingCount = 0;
+	let pendingCount = 0;
+	let letterCount = 0;
+	for (const match of matches) {
+		const originalWord = match[0];
+		const word = normalizeWord(originalWord);
+		const before = rawText.slice(cursor, match.index);
+		if (before) {
+			ipaText.append(document.createTextNode(before));
+			const separator = document.createElement('span');
+			separator.className = 'phonetic-separator';
+			separator.textContent = before;
+			letterGrid.append(separator);
+		}
+		const entry = currentEntry(word);
+		if (entry) {
+			const variants = getVariantsForDisplay(word, entry, true);
+			const ipa = variants[0];
+			const ipaSpan = document.createElement('span');
+			ipaSpan.textContent = `/${ipa}/`;
+			ipaText.append(ipaSpan);
+			letterCount += appendLetterButtons(ipa, letterGrid);
+			const note = finalRNote(word, ipa);
+			if (note && !notes.includes(note)) notes.push(note);
+		} else if (pendingWord && word === pendingWord) {
+			const pending = document.createElement('span');
+			pending.className = 'pending-transcription';
+			pending.textContent = '…';
+			ipaText.append(pending);
+			const pendingTranslation = document.createElement('span');
+			pendingTranslation.className = 'pending-translation';
+			pendingTranslation.textContent = `${originalWord} — избери предложение`;
+			letterGrid.append(pendingTranslation);
+			pendingCount++;
+		} else {
+			const missing = document.createElement('span');
+			missing.className = 'missing-word';
+			missing.textContent = `${originalWord} — не е намерена`;
+			ipaText.append(missing);
+			const missingTranslation = document.createElement('span');
+			missingTranslation.className = 'missing-translation';
+			missingTranslation.textContent = `${originalWord} — не е намерена`;
+			letterGrid.append(missingTranslation);
+			missingCount++;
+		}
+		cursor = match.index + originalWord.length;
+	}
+	const after = rawText.slice(cursor);
+	if (after) {
+		ipaText.append(document.createTextNode(after));
+		const separator = document.createElement('span');
+		separator.className = 'phonetic-separator';
+		separator.textContent = after;
+		letterGrid.append(separator);
+	}
+	wordInput.classList.toggle('input-not-found', missingCount > 0);
+	if (notes.length) {
+		wordNote.textContent = notes.join(' ');
+		wordNote.classList.remove('hidden');
+	}
+	if (missingCount > 0) {
+		document.getElementById('notFoundHeading').textContent = missingCount === 1 ? 'Дума не е намерена' : `Не са намерени ${missingCount} думи`;
+		document.getElementById('notFoundMessage').textContent = 'Ненамерените думи са отбелязани в червено. Провери изписването или избери предложение.';
+		notFound.classList.remove('hidden');
+	} else {
+		notFound.classList.add('hidden');
+	}
+	if (letterCount > 0) {
+		const firstButton = letterGrid.querySelector('.letter-cell');
+		if (firstButton) firstButton.click();
+	} else {
+		detailSymbol.textContent = missingCount ? '!' : '—';
+		detailTitle.textContent = missingCount ? 'Няма транскрипция за маркираните думи' : pendingCount ? 'Избери дума от предложенията' : 'Няма звукове за показване';
+		detailDescription.textContent = missingCount ? 'Червените обозначения показват думите, за които речникът не намери произношение.' : pendingCount ? 'Когато избереш предложение, транскрипцията ще се появи.' : 'Започни да пишеш дума, фраза или изречение.';
+		detailExample.textContent = '';
+	}
+}
+
+function chooseSuggestion(suggestedWord) {
+	const raw = wordInput.value;
+	const match = [...raw.matchAll(WORD_PATTERN)].at(-1);
+	if (match && match.index + match[0].length === raw.length) {
+		wordInput.value = raw.slice(0, match.index) + suggestedWord;
+	} else {
+		wordInput.value = `${raw}${raw && !/\s$/.test(raw) ? ' ' : ''}${suggestedWord}`;
+	}
+	processSearchInput();
+}
+
+function processSearchInput() {
+	const raw = wordInput.value;
+	suggestions.replaceChildren();
+	wordInput.classList.remove('input-not-found');
+	if (!raw.trim()) {
+		showEmptyState();
+		return;
+	}
+	if (!dataReady) {
+		showTypingState(raw.trim(), 0);
+		return;
+	}
+	const matches = [...raw.matchAll(WORD_PATTERN)];
+	const simpleWord = matches.length === 1 && matches[0][0] === raw && !/[\s,.;:!?()[\]{}]/.test(raw);
+	if (simpleWord) {
+		const query = normalizeWord(raw);
+		if (currentEntry(query)) {
+			loadWord(query);
+			showSuggestions(query);
+		} else {
+			const count = showSuggestions(query);
+			showTypingState(query, count);
+		}
+		return;
+	}
+	const lastMatch = matches.at(-1);
+	let prefix = '';
+	let pendingWord = '';
+	if (lastMatch && lastMatch.index + lastMatch[0].length === raw.length) {
+		prefix = normalizeWord(lastMatch[0]);
+		if (!currentEntry(prefix)) pendingWord = prefix;
+	}
+	const suggestionCount = prefix ? showSuggestions(prefix) : 0;
+	if (suggestionCount > 0 && pendingWord) renderTextQuery(raw, pendingWord);
+	else renderTextQuery(raw);
+	if (matches.length === 0) showTypingState(raw, suggestionCount);
 }
 function updateActivePronunciation() {
 	if (!activeVariants.length) return;
@@ -657,6 +834,7 @@ function loadWord(word) {
 	if (!key) return;
 	activeWord = key;
 	wordInput.value = key;
+	wordInput.classList.remove('input-not-found');
 	suggestions.replaceChildren();
 	wordNote.classList.add('hidden');
 	notFound.classList.add('hidden');
@@ -671,8 +849,10 @@ function loadWord(word) {
 		detailDescription.textContent = dataReady ? 'Не е открито произношение. Провери изписването или избери дума от предложенията.' : 'Опитай отново след малко.';
 		detailExample.textContent = '';
 		if (dataReady) {
+			wordInput.classList.add('input-not-found');
 			const suggestionCount = showSuggestions(key);
 			if (suggestionCount > 0) {
+				wordInput.classList.remove('input-not-found');
 				detailTitle.textContent = 'Избери дума от предложенията';
 				detailDescription.textContent = 'Произношението ще се покаже веднага щом избереш дума.';
 				notFound.classList.add('hidden');
@@ -689,7 +869,7 @@ function loadWord(word) {
 		return;
 	}
 	resultWord.textContent = key;
-	activeVariants = entry.variants.slice();
+	activeVariants = getVariantsForDisplay(key, entry, false);
 	activeVariantLabels = entry.source === 'special-a'
 		? ['/eɪ/ — името на буквата A', '/ə/ — членът „a“']
 		: [];
@@ -711,9 +891,9 @@ function loadWord(word) {
 	} else if (entry.source === 'special-a') {
 		wordNote.textContent = 'Името на буквата A се произнася /eɪ/. Като неопределителен член „a“ обикновено се произнася /ə/; избери желания вариант от списъка.';
 		wordNote.classList.remove('hidden');
-	} else if (activeAccent === 'en_UK' && key === 'here') {
-		wordNote.textContent = 'В този пример транскрипцията е показана като /hɪər/. Някои британски речници записват /hɪə/, защото r обикновено не се произнася в края на думата без следващ гласен звук.';
-		wordNote.classList.remove('hidden');
+	} else {
+		const note = finalRNote(key, activeVariants[activeVariantIndex] || activeVariants[0]);
+		if (note) { wordNote.textContent = note; wordNote.classList.remove('hidden'); }
 	}
 }
 function showSuggestions(query) {
@@ -731,13 +911,14 @@ function showSuggestions(query) {
 		button.setAttribute('role', 'option');
 		button.setAttribute('aria-label', `Избери думата ${word}`);
 		button.textContent = word;
-		button.addEventListener('click', () => loadWord(word));
+		button.addEventListener('click', () => chooseSuggestion(word));
 		suggestions.append(button);
 		shown++;
 	}
 	return shown;
 }
 function showEmptyState() {
+	wordInput.classList.remove('input-not-found');
 	activeWord = '';
 	activeVariants = [];
 	activeVariantLabels = [];
@@ -755,6 +936,7 @@ function showEmptyState() {
 	detailExample.textContent = '';
 }
 function showTypingState(query, suggestionCount) {
+	wordInput.classList.toggle('input-not-found', Boolean(dataReady && suggestionCount === 0));
 	variantRow.classList.add('hidden');
 	resultWord.textContent = query;
 	ipaText.textContent = '—';
@@ -782,33 +964,21 @@ function showTypingState(query, suggestionCount) {
 }
 lookupForm.addEventListener('submit', event => {
 	event.preventDefault();
-	const query = normalizeWord(wordInput.value);
-	if (currentEntry(query)) {
-		loadWord(query);
+	const raw = wordInput.value;
+	const matches = [...raw.matchAll(WORD_PATTERN)];
+	const simpleWord = matches.length === 1 && matches[0][0] === raw && !/[\s,.;:!?()[\]{}]/.test(raw);
+	if (simpleWord && currentEntry(normalizeWord(raw))) {
+		processSearchInput();
 		return;
 	}
 	const firstSuggestion = suggestions.querySelector('button');
 	if (firstSuggestion) {
-		loadWord(firstSuggestion.textContent);
+		chooseSuggestion(firstSuggestion.textContent);
 		return;
 	}
-	showTypingState(query, 0);
+	processSearchInput();
 });
-wordInput.addEventListener('input', () => {
-	const query = normalizeWord(wordInput.value);
-	suggestions.replaceChildren();
-	if (!query) {
-		showEmptyState();
-		return;
-	}
-	if (currentEntry(query)) {
-		loadWord(query);
-		showSuggestions(query);
-		return;
-	}
-	const count = showSuggestions(query);
-	showTypingState(query, count);
-});
+wordInput.addEventListener('input', processSearchInput);
 wordInput.addEventListener('keydown', event => {
 	if (event.key === 'ArrowDown') {
 		const first = suggestions.querySelector('button');
@@ -836,6 +1006,10 @@ suggestions.addEventListener('keydown', event => {
 pronunciationSelect.addEventListener('change', () => {
 	activeVariantIndex = Number(pronunciationSelect.value) || 0;
 	updateActivePronunciation();
+	if (activeAccent === 'en_UK' && /(?:r|re)$/u.test(normalizeWord(activeWord)) && !customEntries[activeWord]) {
+		const note = finalRNote(activeWord, activeVariants[activeVariantIndex] || activeVariants[0]);
+		if (note) { wordNote.textContent = note; wordNote.classList.remove('hidden'); }
+	}
 });
 
 async function loadDictionary(accent, force = false) {
@@ -895,7 +1069,7 @@ async function loadDictionary(accent, force = false) {
 		dataReady = true;
 		setDictionaryStatus('Речникът не можа да се зареди. Отвори „Технически подробности“ за други начини.', 'error');
 		datasetInfo.textContent = `Неуспешно зареждане: ${error.message}. Външен речник не е зареден; личните думи все още работят.`;
-		if (wordInput.value.trim()) loadWord(wordInput.value);
+		if (wordInput.value.trim()) processSearchInput();
 		else showEmptyState();
 	}
 }
@@ -906,10 +1080,13 @@ function finishDictionaryLoad(accent, count, cacheMessage) {
 	const expected = accent === 'en_UK' ? 'около 65 000' : 'около 126 000';
 	setDictionaryStatus('Речникът е готов.', 'success');
 	datasetInfo.textContent = `${count.toLocaleString('bg-BG')} записа са заредени (${ACCENT_LABELS[accent]}). Състояние: ${cacheMessage}. Очакван размер на изходния списък: ${expected}. Докато страницата е отворена, записите се пазят и в оперативната памет.`;
-	if (wordInput.value.trim()) loadWord(wordInput.value);
+	if (wordInput.value.trim()) processSearchInput();
 	else showEmptyState();
 }
-accentSelect.addEventListener('change', () => loadDictionary(accentSelect.value));
+accentSelect.addEventListener('change', () => {
+	document.getElementById('accentControl').classList.add('accent-control');
+	loadDictionary(accentSelect.value);
+});
 document.getElementById('refreshDictionary').addEventListener('click', () => loadDictionary(activeAccent, true));
 document.getElementById('datasetFile').addEventListener('change', async event => {
 	const file = event.target.files && event.target.files[0];
@@ -930,7 +1107,7 @@ document.getElementById('datasetFile').addEventListener('change', async event =>
 			setDictionaryStatus('Речникът е зареден.', 'success');
 			datasetInfo.textContent = `${dictionaryEntries.size.toLocaleString('bg-BG')} записа са заредени от файла ${file.name}, но не могат да се запазят локално.`;
 		}
-		if (wordInput.value.trim()) loadWord(wordInput.value);
+		if (wordInput.value.trim()) processSearchInput();
 		else showEmptyState();
 	} catch (error) {
 		setDictionaryStatus('Файлът не можа да бъде прочетен. Виж „Технически подробности“.', 'error');
