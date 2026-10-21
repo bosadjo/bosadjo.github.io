@@ -127,6 +127,9 @@ select { width: 100%; min-height: 46px; padding: 9px 12px; border: 1px solid #cf
 .translation-heading .small-label { margin-bottom: 8px; }
 .translation-help { color: var(--muted); font-size: .82rem; }
 .letter-grid { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; min-height: 66px; }
+.word-transcript-group { display: inline-flex; flex: 0 1 auto; flex-wrap: wrap; align-items: center; gap: 7px; max-width: 100%; min-width: 0; padding: 6px 8px; border: 1px solid; border-radius: 15px; margin: 2px 5px 2px 0; }
+.word-transcript-group-a { background: #f5f8ff; border-color: #dfe7fb; }
+.word-transcript-group-b { background: #f3faf8; border-color: #dcece7; }
 .letter-cell {
 	min-width: 48px;
 	height: 58px;
@@ -753,6 +756,8 @@ function drawPronunciation(ipa, word = activeWord) {
 
 function renderTextQuery(rawText, pendingWord = '') {
 	const matches = [...rawText.matchAll(WORD_PATTERN)];
+	const separateWordGroups = matches.length > 1;
+	let transcriptWordIndex = 0;
 	activeWord = normalizeWord(rawText);
 	activeVariants = [];
 	activeVariantLabels = [];
@@ -779,6 +784,14 @@ function renderTextQuery(rawText, pendingWord = '') {
 			separator.textContent = before;
 			letterGrid.append(separator);
 		}
+		let wordContainer = letterGrid;
+		if (separateWordGroups) {
+			wordContainer = document.createElement('span');
+			wordContainer.className = `word-transcript-group word-transcript-group-${transcriptWordIndex % 2 === 0 ? 'a' : 'b'}`;
+			wordContainer.setAttribute('role', 'group');
+			wordContainer.setAttribute('aria-label', `Българска транскрипция за ${originalWord}`);
+			letterGrid.append(wordContainer);
+		}
 		const entry = currentEntry(word);
 		if (entry) {
 			const variants = getVariantsForDisplay(word, entry, true);
@@ -787,7 +800,7 @@ function renderTextQuery(rawText, pendingWord = '') {
 			ipaSpan.textContent = `/${ipa}/`;
 			ipaText.append(ipaSpan);
 			const needsFinalRCell = activeAccent === 'en_UK' && /(?:r|re)$/u.test(word) && Boolean(finalRNote(word, ipa));
-			letterCount += appendLetterButtons(ipa, letterGrid, needsFinalRCell);
+			letterCount += appendLetterButtons(ipa, wordContainer, needsFinalRCell);
 			const note = finalRNote(word, ipa);
 			if (note && !notes.includes(note)) notes.push(note);
 		} else if (pendingWord && word === pendingWord) {
@@ -798,7 +811,7 @@ function renderTextQuery(rawText, pendingWord = '') {
 			const pendingTranslation = document.createElement('span');
 			pendingTranslation.className = 'pending-translation';
 			pendingTranslation.textContent = `${originalWord} — избери предложение`;
-			letterGrid.append(pendingTranslation);
+			wordContainer.append(pendingTranslation);
 			pendingCount++;
 		} else {
 			const missing = document.createElement('span');
@@ -808,9 +821,10 @@ function renderTextQuery(rawText, pendingWord = '') {
 			const missingTranslation = document.createElement('span');
 			missingTranslation.className = 'missing-translation';
 			missingTranslation.textContent = `${originalWord} — не е намерена`;
-			letterGrid.append(missingTranslation);
+			wordContainer.append(missingTranslation);
 			missingCount++;
 		}
+		transcriptWordIndex++;
 		cursor = match.index + originalWord.length;
 	}
 	const after = rawText.slice(cursor);
